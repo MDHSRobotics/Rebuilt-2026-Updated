@@ -7,7 +7,7 @@ package frc.robot;
 import static org.wpilib.units.Units.Meters;
 
 import com.ctre.phoenix6.SignalLogger;
-import com.pathplanner.lib.commands.FollowPathCommand;
+//import com.pathplanner.lib.commands.FollowPathCommand;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.net.WebServer;
@@ -15,11 +15,11 @@ import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.system.DataLogManager;
 import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
+//import org.wpilib.driverstation.RobotState;
 import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
-import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.DriverStation;
+//import org.wpilib.driverstation.MatchType;
+//import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.system.Filesystem;
 import org.wpilib.framework.TimedRobot;
 import org.wpilib.system.Tracer;
@@ -29,7 +29,7 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.util.Elastic;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.logging.LoggableSparkFlex;
-import org.littletonrobotics.urcl.URCL;
+//import org.littletonrobotics.urcl.URCL;
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
@@ -45,13 +45,6 @@ public class Robot extends TimedRobot {
   //     new HootAutoReplay().withTimestampReplay().withJoystickReplay();
 
   public Robot() {
-    m_robotContainer = new RobotContainer();
-  }
-
-  @Override
-  public void robotInit() {
-    // Silence Joystick warnings because they get in the way of other warnings
-    DriverStation.silenceJoystickConnectionWarning(true);
 
     m_matchTimePub = NetworkTableInstance.getDefault().getDoubleTopic("Match Time").publish();
 
@@ -81,14 +74,16 @@ public class Robot extends TimedRobot {
     SignalLogger.start();
     DataLogManager.start();
     DriverStation.startDataLog(DataLogManager.getLog(), true);
-    URCL.start();
-    FollowPathCommand.warmupCommand().schedule();
+    //URCL.start();
+    //FollowPathCommand.warmupCommand().schedule();
     m_hasAppliedRobotRotation = false;
 
     // Create the webserver for accessing Elastic's saved layout across computers
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
     // Initially open the Autonomous tab in Elastic; it will be swapped to Teleop later
     Elastic.selectTab("Autonomous");
+
+    m_robotContainer = new RobotContainer();
   }
 
   @Override
@@ -117,7 +112,7 @@ public class Robot extends TimedRobot {
         m_robotContainer.resetRobotRotation(Rotation2d.k180deg);
         m_hasAppliedRobotRotation = true;
       } else if (alliance == Alliance.RED) {
-        m_robotContainer.resetRobotRotation(Rotation2d.kZero);
+        m_robotContainer.resetRobotRotation(Rotation2d.ZERO);
         m_hasAppliedRobotRotation = true;
       }
     }

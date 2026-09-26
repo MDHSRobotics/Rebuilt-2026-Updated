@@ -6,14 +6,15 @@ package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.auto.NamedCommands;
+//import com.pathplanner.lib.auto.AutoBuilder;
+//import com.pathplanner.lib.auto.NamedCommands;
 import org.wpilib.math.filter.SlewRateLimiter;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
-import org.wpilib.driverstation.GenericHID.RumbleType;
-import org.wpilib.smartdashboard.SendableChooser;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.driverstation.GenericHID;
+import org.wpilib.tunable.Selectable;
+import org.wpilib.tunable.Tunables;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import org.wpilib.command2.InstantCommand;
@@ -21,8 +22,9 @@ import org.wpilib.command2.ParallelCommandGroup;
 import org.wpilib.command2.RunCommand;
 import org.wpilib.command2.SequentialCommandGroup;
 import org.wpilib.command2.WaitCommand;
-import org.wpilib.command2.button.CommandPS4Controller;
-import org.wpilib.command2.button.CommandXboxController;
+import org.wpilib.command2.button.CommandDualShock4Controller;
+import org.wpilib.command2.button.CommandGamepad;
+import org.wpilib.driverstation.POVDirection;
 import org.wpilib.command2.button.RobotModeTriggers;
 import org.wpilib.command2.button.Trigger;
 import frc.robot.Constants.ControllerConstants;
@@ -73,7 +75,7 @@ public class RobotContainer {
 
   // Autonomous Chooser - A set of options for specifying the active autonomous command from a
   // dashboard like Elastic
-  private SendableChooser<Command> m_staticAutoChooser;
+  private Selectable<Command> m_staticAutoChooser;
 
   /* Autonomous Creator - This dynamically creates commands based on settings in the Elastic Auto tab */
   private final DynamicAutoCreator m_dynamicAutoCreator =
@@ -82,10 +84,11 @@ public class RobotContainer {
   private final DriveTelemetry m_logger = new DriveTelemetry(DriveConstants.MAX_LINEAR_SPEED);
 
   /* Controllers  */
-  private final CommandPS4Controller m_driverController =
-      new CommandPS4Controller(ControllerConstants.DRIVER_CONTROLLER_PORT);
-  private final CommandXboxController m_operatorController =
-      new CommandXboxController(ControllerConstants.OPERATOR_CONTROLLER_PORT);
+private final CommandDualShock4Controller m_driverController =
+    new CommandDualShock4Controller(ControllerConstants.DRIVER_CONTROLLER_PORT);
+private final CommandGamepad m_operatorController =
+    new CommandGamepad(ControllerConstants.OPERATOR_CONTROLLER_PORT);
+
 
   // Limiters for smoother controller input
   private final SlewRateLimiter m_xLimiter = new SlewRateLimiter(2.5);
@@ -94,17 +97,12 @@ public class RobotContainer {
 
   private final List<Testable> testableSubsystems = List.of(m_intake, m_hopper, m_shooter);
 
-  private Trigger m_autoAlignCanceled =
-      new Trigger(
-          () ->
-              Math.abs(
-                      m_driverController.getRawAxis(
-                          ControllerConstants.DRIVER_CONTROLLER_RIGHT_AXIS))
-                  > 0.1);
-  private Trigger m_slowMode =
-      new Trigger(
-          () -> m_driverController.getRawAxis(ControllerConstants.DRIVER_CONTROLLER_R2_AXIS) > 0.5);
-  private Trigger m_lockWheels = new Trigger(() -> m_driverController.getRawAxis(2) > 0.5);
+private Trigger m_autoAlignCanceled =
+    new Trigger(() -> Math.abs(m_driverController.getRightX()) > 0.1);
+private Trigger m_slowMode =
+    new Trigger(() -> m_driverController.getR2() > 0.5);
+private Trigger m_lockWheels =
+    new Trigger(() -> m_driverController.getL2() > 0.5);
 
   // Power Distribution Hub
   // public EnergyMonitor energyMonitor = new EnergyMonitor();
@@ -125,38 +123,39 @@ public class RobotContainer {
    *  - Dynamically generated commands using parameter settings displayed on the dashboard
    *    (such as starting position, paths, and actions)
    */
-  private void setupAutoCommandOptions() {
+    private void setupAutoCommandOptions() {
 
-    // First preload any auto commands statically defined in PathPlanner,
-    // specifying which of the PathPlanner commands should be the default (if any)
-    m_staticAutoChooser = AutoBuilder.buildAutoChooser();
+     // PathPlanner's buildAutoChooser() returns the old SendableChooser type,
+     // so build the chooser ourselves instead.
+     m_staticAutoChooser = new Selectable<>();
+     m_staticAutoChooser.addDefault("None", Commands.none());
 
-    // Explicitly add any other auto commands
-    m_staticAutoChooser.addOption("------------------------", Commands.none());
-    m_staticAutoChooser.addOption("Print Test", new RunCommand(() -> System.out.println("Test")));
-    m_staticAutoChooser.addOption(
+        // Explicitly add any other auto commands
+     m_staticAutoChooser.add("------------------------", Commands.none());
+     m_staticAutoChooser.add("Print Test", new RunCommand(() -> System.out.println("Test")));
+     m_staticAutoChooser.add(
         "Shooting only", m_dynamicAutoCreator.createShootingAutoSequence());
-    m_staticAutoChooser.addOption(
+     m_staticAutoChooser.add(
         "Middle Shooting", m_dynamicAutoCreator.createMiddleShootingAutoSequence());
-    m_staticAutoChooser.addOption(
+     m_staticAutoChooser.add(
         "Middle Shooting and to ramp", m_dynamicAutoCreator.createMiddleShootingRampAutoSequence());
 
-    // Publish the auto command chooser to the dashboard
-    SmartDashboard.putData("Static auto commands", m_staticAutoChooser);
+     // Publish the auto command chooser to the dashboard
+     Tunables.publish("Static auto commands", m_staticAutoChooser);
 
-    // Publish to the dashboard any auto parameters that can be used to dynamically
-    // create a composite auto command. These parameters are things like starting
-    // position, actions, etc.
-    m_dynamicAutoCreator.publishParameters();
+      // Publish any dynamic auto parameters to the dashboard
+      m_dynamicAutoCreator.publishParameters();
 
-    SmartDashboard.putData("Smoke Test", buildFullTestSequence());
-    SmartDashboard.putData("Intake Smoke Test", buildSubsystemTestSequence(0));
-    SmartDashboard.putData("Hopper Smoke Test", buildSubsystemTestSequence(1));
-    SmartDashboard.putData("Shooter Smoke Test", buildSubsystemTestSequence(2));
-  }
+     // Commands can be published directly, so they still show as buttons on the dashboard
+     Tunables.publish("Smoke Test", buildFullTestSequence());
+     Tunables.publish("Intake Smoke Test", buildSubsystemTestSequence(0));
+     Tunables.publish("Hopper Smoke Test", buildSubsystemTestSequence(1));
+     Tunables.publish("Shooter Smoke Test", buildSubsystemTestSequence(2));
+    }
 
   // Named Commands for Autonomous
   private void registerNamedCommands() {
+    /* 
     NamedCommands.registerCommand(
         "Ramp Up Shooter", Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2));
     NamedCommands.registerCommand(
@@ -182,6 +181,7 @@ public class RobotContainer {
                             m_shooter.getYawRotationalRate()
                                 * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
             .withTimeout(2));
+        */
   }
 
   private void setDefaultCommands() {
@@ -276,8 +276,20 @@ public class RobotContainer {
         .and(new Trigger(() -> !HubStatus.isHubActive(3, 3)))
         .whileTrue(
             Commands.runEnd(
-                () -> m_driverController.getHID().setRumble(RumbleType.kBothRumble, 1.0),
-                () -> m_driverController.getHID().setRumble(RumbleType.kBothRumble, 0.0)));
+                () -> {
+                    m_driverController.getHID().setRumble(
+                        GenericHID.RumbleType.LEFT_RUMBLE, 1.0);
+                    m_driverController.getHID().setRumble(
+                        GenericHID.RumbleType.RIGHT_RUMBLE, 1.0);
+                },
+                () -> {
+                    m_driverController.getHID().setRumble(
+                        GenericHID.RumbleType.LEFT_RUMBLE, 0.0);
+                    m_driverController.getHID().setRumble(
+                        GenericHID.RumbleType.RIGHT_RUMBLE, 0.0);
+                }));
+
+
 
     // Lock on to hub
     m_driverController
@@ -309,9 +321,14 @@ public class RobotContainer {
 
     /* Intake Commands */
 
-    m_operatorController
-        .povDown()
-        .onTrue(Commands.run(() -> m_intake.runMotors(.5, .5), m_intake).withTimeout(1.5));
+   m_operatorController
+    .getHID()
+    .pov(POVDirection.DOWN)
+    .onTrue(
+        Commands.run(
+            () -> m_intake.runMotors(0.5, 0.5),
+            m_intake)
+            .withTimeout(1.5));
     // Deploy and Stow Intake
     // m_operatorController
     //     .leftBumper()
@@ -333,41 +350,66 @@ public class RobotContainer {
     // m_operatorController.b().onTrue(Commands.run(() -> m_intake.runMotors(0.8), m_intake));
 
     m_operatorController
-        .y()
+        .faceUp()
         .whileTrue(
             new ParallelCommandGroup(
-                Commands.run(() -> m_shooter.shootBall(m_testShooterRPM), m_shooter),
-                Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper)));
+                Commands.run(
+                    () -> m_shooter.shootBall(m_testShooterRPM),
+                    m_shooter),
+                Commands.run(
+                    () -> m_hopper.runHopper(HopperPowers.SHOOT),
+                    m_hopper)));
     // Spin Intake
     m_operatorController
         .rightBumper()
         .whileTrue(
             new ParallelCommandGroup(
                 Commands.run(
-                    () -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER), m_intake),
-                Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE))));
+                    () -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER),
+                    m_intake),
+                Commands.run(
+                    () -> m_hopper.runHopper(HopperPowers.INTAKE),
+                    m_hopper)));
 
     // Spin Intake Reverse
     m_operatorController
         .leftBumper()
         .whileTrue(
             new ParallelCommandGroup(
-                Commands.run(() -> m_intake.runSpinner(-0.9), m_intake),
-                Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE))));
+                Commands.run(
+                    () -> m_intake.runSpinner(-0.9),
+                    m_intake),
+                Commands.run(
+                    () -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE),
+                    m_hopper)));
 
     m_operatorController
         .leftTrigger()
-        .whileTrue(Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE), m_hopper));
+        .whileTrue(
+            Commands.run(
+                () -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE),
+                m_hopper));
+
     m_operatorController
         .rightTrigger()
-        .whileTrue(Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE), m_hopper));
+        .whileTrue(
+            Commands.run(
+                () -> m_hopper.runHopper(HopperPowers.INTAKE),
+                m_hopper));
 
     // Change Shooter Trim
-    // m_operatorController.povLeft().onTrue(new InstantCommand(() -> changeTestRpm(-50)));
-    m_operatorController.povRight().onTrue(new InstantCommand(() -> m_shooter.changeTrim(100)));
+    m_operatorController
+        .dpadRight()
+        .onTrue(
+            new InstantCommand(
+                () -> m_shooter.changeTrim(100)));
 
-    // m_operatorController.povRight().onTrue(new InstantCommand(() -> changeTestRpm(50)));
-    m_operatorController.povLeft().onTrue(new InstantCommand(() -> m_shooter.changeTrim(-100)));
+    m_operatorController
+        .dpadLeft()
+        .onTrue(
+            new InstantCommand(
+                () -> m_shooter.changeTrim(-100)));
+
   }
 
   public Command getAutonomousCommand() {
@@ -416,11 +458,16 @@ public class RobotContainer {
     return limited * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
   }
 
-  public double getRotationalRate() {
-    double input = -m_driverController.getRawAxis(ControllerConstants.DRIVER_CONTROLLER_RIGHT_AXIS);
-    double limited = m_rotLimiter.calculate(input);
-    return limited * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY * m_robotSpeed;
-  }
+ public double getRotationalRate() {
+  double input = -m_driverController.getRightX();
+
+  double limited = m_rotLimiter.calculate(input);
+
+  return limited
+      * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY
+      * m_robotSpeed;
+}
+
 
   public void resetFieldPosition(Pose2d position) {
     m_drivetrain.resetPose(position);
@@ -435,14 +482,14 @@ public class RobotContainer {
   }
 
   /** Update dashboard outputs. */
-  public void updateDashboardOutputs() {
-    SmartDashboard.putBoolean("Hub Active", HubStatus.isHubActive());
-    SmartDashboard.putBoolean("Locked on to Hub", m_isLocked);
-    SmartDashboard.putNumber("Time to Next Shift", HubStatus.timeToNextShift());
-    SmartDashboard.putString(
+public void updateDashboardOutputs() {
+    Telemetry.log("Hub Active", HubStatus.isHubActive());
+    Telemetry.log("Locked on to Hub", m_isLocked);
+    Telemetry.log("Time to Next Shift", HubStatus.timeToNextShift());
+    Telemetry.log(
         "CanivoreStatus", TunerConstants.kCANBus.getStatus().Status.toString());
     // energyMonitor.update();
-  }
+}
 
   public Command buildFullTestSequence() {
     List<Command> steps = new ArrayList<>();
