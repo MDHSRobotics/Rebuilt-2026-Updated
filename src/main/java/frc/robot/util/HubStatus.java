@@ -3,9 +3,6 @@ package frc.robot.util;
 import org.wpilib.driverstation.MatchState;
 import org.wpilib.driverstation.RobotState;
 import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
-import org.wpilib.driverstation.Alliance;
 import java.util.Optional;
 
 public class HubStatus {
@@ -17,6 +14,7 @@ public class HubStatus {
   /** This method is used to determine if the Hub is active including a pre and post time */
   public static boolean isHubActive(double pre, double post) {
     Optional<Alliance> alliance = MatchState.getAlliance();
+    
     if (alliance.isEmpty()) {
       return false;
     }
@@ -28,14 +26,14 @@ public class HubStatus {
     }
 
     double matchTime = MatchState.getMatchTime();
-    String gameData = MatchState.getGameData();
+    Optional<String> gameData = MatchState.getGameData();
 
     if (gameData.isEmpty()) {
       return true;
     }
 
     boolean redInactiveFirst = false;
-    switch (gameData.charAt(0)) {
+    switch (gameData.get().charAt(0)) {
       case 'R' -> redInactiveFirst = true;
       case 'B' -> redInactiveFirst = false;
       default -> {
@@ -45,8 +43,8 @@ public class HubStatus {
 
     boolean shift1Active =
         switch (alliance.get()) {
-          case Red -> !redInactiveFirst;
-          case Blue -> redInactiveFirst;
+          case RED -> !redInactiveFirst;
+          case BLUE -> redInactiveFirst;
         };
 
     // Shift time windows: each entry is {start, end} in match time (counting down).

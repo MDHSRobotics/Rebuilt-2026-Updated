@@ -15,7 +15,8 @@ import frc.robot.util.Testable;
 import frc.robot.util.logging.LoggableSparkFlex;
 import frc.robot.util.logging.LoggableSparkFlex.EncoderType;
 import frc.robot.util.logging.LoggableSparkFlex.LoggedValue;
-
+import frc.robot.Constants;
+  
 public class Intake extends SubsystemBase implements Testable {
 
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
@@ -24,6 +25,7 @@ public class Intake extends SubsystemBase implements Testable {
   // Motors
   private final LoggableSparkFlex m_intakeRightMotor =
       new LoggableSparkFlex(
+          Constants.CanBusConstants.INTAKE_CAN_BUS,
           IntakeConstants.INTAKE_RIGHT_MOTOR_ID,
           MotorType.kBrushless,
           m_table,
@@ -34,6 +36,7 @@ public class Intake extends SubsystemBase implements Testable {
           LoggedValue.OUTPUT_VOLTAGE);
   private final LoggableSparkFlex m_intakeLeftMotor =
       new LoggableSparkFlex(
+          Constants.CanBusConstants.INTAKE_CAN_BUS,
           IntakeConstants.INTAKE_LEFT_MOTOR_ID,
           MotorType.kBrushless,
           m_table,
@@ -44,6 +47,7 @@ public class Intake extends SubsystemBase implements Testable {
           LoggedValue.OUTPUT_VOLTAGE);
   private final LoggableSparkFlex m_spinnerMotor =
       new LoggableSparkFlex(
+          Constants.CanBusConstants.INTAKE_CAN_BUS,
           IntakeConstants.INTAKE_SPINNERS_MOTOR_ID,
           MotorType.kBrushless,
           m_table,
@@ -103,12 +107,12 @@ public class Intake extends SubsystemBase implements Testable {
   }
 
   public void runMotors(double leftIntakeMotorPower, double rightIntakeMotorPower) {
-    m_intakeRightMotor.set(leftIntakeMotorPower);
-    m_intakeLeftMotor.set(rightIntakeMotorPower);
+    m_intakeRightMotor.setThrottle(leftIntakeMotorPower);
+    m_intakeLeftMotor.setThrottle(rightIntakeMotorPower);
   }
 
   public void runSpinner(double power) {
-    m_spinnerMotor.set(power);
+    m_spinnerMotor.setThrottle(power);
     if (power > 0) {
       runMotors(IntakeConstants.INTAKE_MOTORS_DOWN_POWER, IntakeConstants.INTAKE_MOTORS_DOWN_POWER);
     }
@@ -138,7 +142,7 @@ public class Intake extends SubsystemBase implements Testable {
     return Commands.sequence(
         Commands.run(
                 () -> {
-                  m_spinnerMotor.set(IntakeConstants.TEST_POWER);
+                  m_spinnerMotor.setThrottle(IntakeConstants.TEST_POWER);
                   double rpm = m_spinnerMotor.getVelocity();
                   m_spinnerMotor.setTestResult(rpm > IntakeConstants.TEST_RPM);
                 },
@@ -146,7 +150,7 @@ public class Intake extends SubsystemBase implements Testable {
             .withTimeout(IntakeConstants.TEST_TIMEOUT),
         Commands.run(
                 () -> {
-                  m_spinnerMotor.set(0.0);
+                  m_spinnerMotor.setThrottle(0.0);
                   m_spinnerMotor.setTestResult(Math.abs(m_spinnerMotor.getVelocity()) < 5);
                 },
                 this)

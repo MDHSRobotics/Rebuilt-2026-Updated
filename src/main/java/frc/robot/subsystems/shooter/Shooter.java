@@ -11,13 +11,15 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import org.wpilib.command2.SubsystemBase;
 import org.wpilib.command2.WaitCommand;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.Constants;
+import frc.robot.Constants.CanBusConstants;
 import frc.robot.util.Aiming;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.PolynomialInterpolation;
@@ -35,6 +37,7 @@ public class Shooter extends SubsystemBase implements Testable {
   /* Spark Flex Motors */
   private final LoggableSparkFlex m_shooterLeftMotor =
       new LoggableSparkFlex(
+          Constants.CanBusConstants.SHOOTER_CAN_BUS,
           ShooterConstants.SHOOTER_LEFT_MOTOR_ID,
           MotorType.kBrushless,
           m_table,
@@ -45,6 +48,7 @@ public class Shooter extends SubsystemBase implements Testable {
           LoggedValue.OUTPUT_VOLTAGE);
   private final LoggableSparkFlex m_shooterRightMotor =
       new LoggableSparkFlex(
+          Constants.CanBusConstants.SHOOTER_CAN_BUS,
           ShooterConstants.SHOOTER_RIGHT_MOTOR_ID,
           MotorType.kBrushless,
           m_table,
@@ -52,6 +56,7 @@ public class Shooter extends SubsystemBase implements Testable {
           EncoderType.RELATIVE);
   private final LoggableSparkFlex m_kickerMotor =
       new LoggableSparkFlex(
+          Constants.CanBusConstants.SHOOTER_CAN_BUS,
           ShooterConstants.KICKER_MOTOR_ID,
           MotorType.kBrushless,
           m_table,
@@ -144,12 +149,12 @@ public class Shooter extends SubsystemBase implements Testable {
     }
 
     m_distanceRobotToTagPub.set(m_currentDistance);
-    SmartDashboard.putBoolean("AprilTag is recognized", m_tagIsSeen);
+    Telemetry.log("AprilTag is recognized", m_tagIsSeen);
   }
 
   public void runLeftMotor(double power, double kickerPower) {
-    m_shooterLeftMotor.set(power);
-    m_kickerMotor.set(kickerPower);
+    m_shooterLeftMotor.setThrottle(power);
+    m_kickerMotor.setThrottle(kickerPower);
   }
 
   public void stopMotors() {
@@ -160,12 +165,12 @@ public class Shooter extends SubsystemBase implements Testable {
 
   public void shootBall() {
     rampUpShooter();
-    m_kickerMotor.set(ShooterConstants.KICKER_SPEED);
+    m_kickerMotor.setVelocity(ShooterConstants.KICKER_SPEED);
   }
 
   public void shootBall(double rpm) {
     rampUpShooter(rpm);
-    m_kickerMotor.set(ShooterConstants.KICKER_SPEED);
+    m_kickerMotor.setVelocity(ShooterConstants.KICKER_SPEED);
   }
 
   public void changeTrim(double amount) {
@@ -194,7 +199,7 @@ public class Shooter extends SubsystemBase implements Testable {
     return Commands.sequence(
         Commands.run(
                 () -> {
-                  m_kickerMotor.set(ShooterConstants.TEST_POWER);
+                  m_kickerMotor.setThrottle(ShooterConstants.TEST_POWER);
                   double rpm = m_kickerMotor.getVelocity();
                   m_kickerMotor.setTestResult(rpm > ShooterConstants.TEST_RPM);
                 },

@@ -17,6 +17,7 @@ import frc.robot.util.Testable;
 import frc.robot.util.logging.LoggableSparkFlex;
 import frc.robot.util.logging.LoggableSparkFlex.EncoderType;
 import frc.robot.util.logging.LoggableSparkFlex.LoggedValue;
+import frc.robot.Constants;
 
 public class Hopper extends SubsystemBase implements Testable {
 
@@ -25,6 +26,7 @@ public class Hopper extends SubsystemBase implements Testable {
 
   private final LoggableSparkFlex m_hopperMotor =
       new LoggableSparkFlex(
+          Constants.CanBusConstants.HOPPER_CAN_BUS,
           HopperConstants.HOPPER_MOTOR_ID,
           MotorType.kBrushless,
           m_table,
@@ -43,7 +45,7 @@ public class Hopper extends SubsystemBase implements Testable {
   }
 
   public void runHopper(HopperConstants.HopperPowers powerEnum) {
-    m_hopperMotor.set(powerEnum.power);
+    m_hopperMotor.setThrottle(powerEnum.power);
   }
 
   public void stopMotors() {
@@ -57,7 +59,7 @@ public class Hopper extends SubsystemBase implements Testable {
     return Commands.sequence(
         Commands.run(
                 () -> {
-                  m_hopperMotor.set(HopperConstants.TEST_POWER);
+                  m_hopperMotor.setThrottle(HopperConstants.TEST_POWER);
                   double rpm = m_hopperMotor.getVelocity();
                   m_hopperMotor.setTestResult(rpm > HopperConstants.TEST_RPM);
                 },
@@ -65,7 +67,7 @@ public class Hopper extends SubsystemBase implements Testable {
             .withTimeout(HopperConstants.TEST_TIMEOUT),
         Commands.run(
                 () -> {
-                  m_hopperMotor.set(0.0);
+                  m_hopperMotor.setThrottle(0.0);
                   m_hopperMotor.setTestResult(epsilonEquals(m_hopperMotor.getVelocity(), 0.0, 5.0));
                 },
                 this)

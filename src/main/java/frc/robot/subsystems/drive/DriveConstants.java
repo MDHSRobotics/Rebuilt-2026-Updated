@@ -96,10 +96,10 @@ public class DriveConstants {
    */
 
   /** PID Constants for PathPlanner translation. */
-  public static final PIDConstants TRANSLATION_PID = new PIDConstants(5.0, 0.0, 0.0);
+  //public static final PIDConstants TRANSLATION_PID = new PIDConstants(5.0, 0.0, 0.0);
 
   /** PID Constants for PathPlanner rotation. */
-  public static final PIDConstants ROTATION_PID = new PIDConstants(5.0, 0.0, 0.0);
+  //public static final PIDConstants ROTATION_PID = new PIDConstants(5.0, 0.0, 0.0);
 
   /** Robot mass with battery and bumpers in kilograms */
   public static final Mass ROBOT_MASS = Kilograms.of(58.513);

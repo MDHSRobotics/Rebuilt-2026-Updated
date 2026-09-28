@@ -6,8 +6,8 @@
 // the root directory of this project.
 
 package frc.robot.util.logging;
-
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.tunable.Tunables;
+import org.wpilib.tunable.TunableDouble;
 import frc.robot.Constants;
 
 /**
@@ -21,6 +21,7 @@ public class LoggedTunableNumber {
   private final String m_key;
   private double m_defaultValue;
   private double m_lastValue;
+  private final TunableDouble m_tunable;
 
   /**
    * Create a new LoggedTunableNumber with the default value
@@ -29,11 +30,15 @@ public class LoggedTunableNumber {
    * @param defaultValue Default value
    */
   public LoggedTunableNumber(String dashboardKey, double defaultValue) {
+
     m_key = "Tuning/" + dashboardKey;
     this.m_defaultValue = defaultValue;
     m_lastValue = defaultValue;
+
     if (Constants.TUNING_MODE) {
-      SmartDashboard.setDefaultNumber(m_key, defaultValue);
+      m_tunable = Tunables.addDouble(m_key, defaultValue);
+    } else { 
+      m_tunable = null;
     }
   }
 
@@ -44,7 +49,7 @@ public class LoggedTunableNumber {
    */
   public double get() {
     if (Constants.TUNING_MODE) {
-      return SmartDashboard.getNumber(m_key, m_defaultValue);
+      return m_tunable.get();
     }
     return m_defaultValue;
   }

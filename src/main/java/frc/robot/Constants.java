@@ -4,6 +4,7 @@ import static org.wpilib.units.Units.Inches;
 import static org.wpilib.units.Units.Meters;
 
 import org.wpilib.fields.Fields;
+import org.wpilib.hardware.bus.CANPort;
 import org.wpilib.fields.Field;
 import org.wpilib.math.linalg.VecBuilder;
 import org.wpilib.math.linalg.Vector;
@@ -26,6 +27,18 @@ public final class Constants {
     public static final int OPERATOR_CONTROLLER_PORT = 1;
     public static final int DRIVER_CONTROLLER_RIGHT_AXIS = 4;
     public static final int DRIVER_CONTROLLER_R2_AXIS = 3;
+  }
+
+  public static class CanBusConstants {
+
+    private CanBusConstants() {}
+
+    // CAN bus for subsystems and other electrical components
+    // Ports S0-S4 are Systemcore CAN buses.  
+    public static final CANPort SHOOTER_CAN_BUS = CANPort.CAN_S0;
+    public static final CANPort HOPPER_CAN_BUS = CANPort.CAN_S0; 
+    public static final CANPort INTAKE_CAN_BUS = CANPort.CAN_S0;
+    public static final CANPort POWER_DISTRIBUTION_CAN_BUS = CANPort.CAN_S0;
   }
 
   public static class VisionConstants {

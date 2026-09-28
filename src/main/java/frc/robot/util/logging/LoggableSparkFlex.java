@@ -8,6 +8,7 @@ import org.wpilib.networktables.BooleanPublisher;
 import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.hardware.bus.CANPort;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -90,6 +91,7 @@ public class LoggableSparkFlex extends SparkFlex {
   // ── Constructor ───────────────────────────────────────────────────────────
 
   /**
+   * @param canPort Port - see CANPort.java for available ports
    * @param canId CAN ID of the motor
    * @param motorType brushless or brushed
    * @param parentTable the subsystem's NT table (e.g. m_table)
@@ -98,13 +100,14 @@ public class LoggableSparkFlex extends SparkFlex {
    * @param valuesToLog which values to publish (varargs, pick any combination)
    */
   public LoggableSparkFlex(
+      CANPort canPort,
       int canId,
       MotorType motorType,
       NetworkTable parentTable,
       String motorName,
       EncoderType encoderType,
       LoggedValue... valuesToLog) {
-    super(canId, motorType);
+    super(canPort, canId, motorType);
 
     if (encoderType == EncoderType.ABSOLUTE) {
       absoluteEncoder = getAbsoluteEncoder();
@@ -175,11 +178,15 @@ public class LoggableSparkFlex extends SparkFlex {
   // ── Getter methods ────────────────────────────────────────────────────────
 
   public double getVelocity() {
-    return absoluteEncoder != null ? absoluteEncoder.getVelocity() : relativeEncoder.getVelocity();
+    return absoluteEncoder != null
+        ? absoluteEncoder.getVelocity().get(0.0)
+        : relativeEncoder.getVelocity().get(0.0);
   }
 
   public double getPosition() {
-    return absoluteEncoder != null ? absoluteEncoder.getPosition() : relativeEncoder.getPosition();
+    return absoluteEncoder != null
+        ? absoluteEncoder.getPosition().get(0.0)
+        : relativeEncoder.getPosition().get(0.0);
   }
 
   // ── Test result methods ───────────────────────────────────────────────────
@@ -197,10 +204,16 @@ public class LoggableSparkFlex extends SparkFlex {
   // ── Internal ──────────────────────────────────────────────────────────────
 
   private void update() {
+
     double currentVelocity =
-        absoluteEncoder != null ? absoluteEncoder.getVelocity() : relativeEncoder.getVelocity();
+        absoluteEncoder != null
+            ? absoluteEncoder.getVelocity().get(0.0)
+            : relativeEncoder.getVelocity().get(0.0);
+
     double currentPosition =
-        absoluteEncoder != null ? absoluteEncoder.getPosition() : relativeEncoder.getPosition();
+        absoluteEncoder != null
+            ? absoluteEncoder.getPosition().get(0.0)
+            : relativeEncoder.getPosition().get(0.0);
 
     if (logs(LoggedValue.VELOCITY)) {
       velocityPub.set(currentVelocity);
@@ -211,13 +224,13 @@ public class LoggableSparkFlex extends SparkFlex {
       targetPositionPub.set(targetPosition);
     }
     if (logs(LoggedValue.CURRENT)) {
-      currentPub.set(getOutputCurrent());
+      currentPub.set(getOutputCurrent().get(0.));
     }
     if (logs(LoggedValue.TEMPERATURE)) {
-      temperaturePub.set(getMotorTemperature());
+      temperaturePub.set(getMotorTemperature().get(0.));
     }
     if (logs(LoggedValue.OUTPUT_VOLTAGE)) {
-      outputVoltagePub.set(getBusVoltage() * getAppliedOutput());
+      outputVoltagePub.set(getBusVoltage().get(0.) * getAppliedOutput().get(0.));
     }
   }
 
