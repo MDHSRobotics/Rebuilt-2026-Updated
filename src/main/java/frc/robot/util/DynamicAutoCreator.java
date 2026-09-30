@@ -2,9 +2,9 @@ package frc.robot.util;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.util.FlippingUtil;
+//SYSTEMCORE import com.pathplanner.lib.auto.AutoBuilder;
+//SYSTEMCORE import com.pathplanner.lib.path.PathPlannerPath;
+//SYSTEMCORE import com.pathplanner.lib.util.FlippingUtil;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.driverstation.MatchState;
@@ -13,8 +13,10 @@ import org.wpilib.driverstation.Alliance;
 import org.wpilib.driverstation.MatchType;
 import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.driverstation.Alliance;
-import org.wpilib.smartdashboard.SendableChooser;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.tunable.Tunable;
+import org.wpilib.tunable.TunableTable;
+import org.wpilib.tunable.Tunables;
+import org.wpilib.tunable.Selectable;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import org.wpilib.command2.ParallelCommandGroup;
@@ -31,9 +33,11 @@ import java.util.function.Consumer;
  * consisting of paths and actions. This is done using parameters which can be set in the dashboard.
  */
 public class DynamicAutoCreator {
-  private final SendableChooser<String> m_autoType = new SendableChooser<>();
-  private final SendableChooser<String> m_startingPositionChooser = new SendableChooser<>();
-  private final SendableChooser<String> m_actionOneChooser = new SendableChooser<>();
+  private static final TunableTable m_autoTunables = Tunables.getTable("Auto");
+
+  private final Selectable<String> m_autoType = new Selectable<>();
+  private final Selectable<String> m_startingPositionChooser = new Selectable<>();
+  private final Selectable<String> m_actionOneChooser = new Selectable<>();
 
   private final Consumer<Pose2d> m_odometryResetter;
   private final AutoTimer m_autoTimer = new AutoTimer();
@@ -65,22 +69,22 @@ public class DynamicAutoCreator {
   public void publishParameters() {
 
     // Select whether to use a dynamic or static auto command
-    m_autoType.addOption("Dynamic", "Dynamic");
-    m_autoType.setDefaultOption("Static", "Static");
+    m_autoType.add("Dynamic", "Dynamic");
+    m_autoType.addDefault("Static", "Static");
     m_autoType.onChange(this::updateDynamicCommand);
-    SmartDashboard.putData("Type of Auto Command", m_autoType);
+    m_autoTunables.publish("Type of Auto Command", m_autoType);
 
     // Starting position option
-    m_startingPositionChooser.setDefaultOption("Top", "Top to ");
-    m_startingPositionChooser.addOption("Middle", "Middle to ");
-    m_startingPositionChooser.addOption("Bottom", "Bottom to ");
+    m_startingPositionChooser.addDefault("Top", "Top to ");
+    m_startingPositionChooser.add("Middle", "Middle to ");
+    m_startingPositionChooser.add("Bottom", "Bottom to ");
     m_startingPositionChooser.onChange(this::updateDynamicCommand);
-    SmartDashboard.putData("Starting Position", m_startingPositionChooser);
+    m_autoTunables.publish("Starting Position", m_startingPositionChooser);
 
     // Options for first action
-    m_actionOneChooser.setDefaultOption("Shoot", "Shoot ball");
+    m_actionOneChooser.addDefault("Shoot", "Shoot ball");
     m_actionOneChooser.onChange(this::updateDynamicCommand);
-    SmartDashboard.putData("Action 1", m_actionOneChooser);
+    m_autoTunables.publish("Action 1", m_actionOneChooser);
 
     // Try to generate a dynamic auto command based on the initial parameter settings
     updateDynamicCommand("");
@@ -93,10 +97,11 @@ public class DynamicAutoCreator {
       m_dynamicAutoSequence = null;
     } else {
       // Create a dynamic command based on current settings of auto parameters
-      createOneShootingSequenceAuto();
+      //SYSTEMCORE createOneShootingSequenceAuto();
     }
   }
 
+  /*SYSTEMCORE BEGIN
   private void createOneShootingSequenceAuto() {
     try {
       String pathName = m_startingPositionChooser.getSelected();
@@ -119,6 +124,7 @@ public class DynamicAutoCreator {
       return;
     }
   }
+  SYSTEMCORE END */
 
   public Command createShootingAutoSequence() {
     Command auto_command =
@@ -162,6 +168,7 @@ public class DynamicAutoCreator {
     return auto_command;
   }
 
+  /*SYSTEMCORE BEGIN
   public Command resetOdometryCommand(Pose2d startingPose) {
     return Commands.runOnce(
         () -> {
@@ -172,6 +179,8 @@ public class DynamicAutoCreator {
           m_odometryResetter.accept(newStartingPose);
         });
   }
+
+  SYSTEMCORE END */
 
   /* This method returns the dynamicly-generated auto command based on
    * options set in the dashboard. If no settings have been selected, return null.

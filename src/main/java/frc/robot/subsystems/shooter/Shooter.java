@@ -2,6 +2,7 @@ package frc.robot.subsystems.shooter;
 
 import static frc.robot.util.EpsilonEquals.epsilonEquals;
 
+import com.limelightvision.Limelight;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.FeedbackSensor;
@@ -17,13 +18,11 @@ import org.wpilib.command2.Commands;
 import org.wpilib.command2.SubsystemBase;
 import org.wpilib.command2.WaitCommand;
 
+import frc.robot.Constants;
 import frc.robot.Constants.BusConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
-import frc.robot.Constants;
-import frc.robot.Constants.CanBusConstants;
 import frc.robot.util.Aiming;
-import frc.robot.util.LimelightHelpers;
 import frc.robot.util.PolynomialInterpolation;
 import frc.robot.util.Testable;
 import frc.robot.util.logging.LoggableSparkFlex;
@@ -35,6 +34,8 @@ public class Shooter extends SubsystemBase implements Testable {
 
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
   private final NetworkTable m_table = m_inst.getTable("Shooter");
+
+  private final Limelight m_frontLimelight = new Limelight(Constants.VisionConstants.FRONT_LIMELIGHT_NAME);
 
   /* Spark Flex Motors */
   private final LoggableSparkFlex m_shooterLeftMotor =
@@ -141,8 +142,8 @@ public class Shooter extends SubsystemBase implements Testable {
             VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE_INCHES,
             FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG,
             VisionConstants.LIMELIGHT_MOUNT_ANGLE,
-            LimelightHelpers.getTY(""));
-    if (LimelightHelpers.getFiducialID("") > 0) {
+            m_frontLimelight.getTYDegrees());
+    if (m_frontLimelight.hasTarget()) {
       m_tagIsSeen = true;
       m_lastDistance = m_currentDistance;
     } else {
@@ -182,7 +183,7 @@ public class Shooter extends SubsystemBase implements Testable {
   public void rampUpShooter() {
     double targetRPM =
         Aiming.calculateShooterRPM(
-            polynomial, m_currentDistance, LimelightHelpers.getFiducialID(""));
+            polynomial, m_currentDistance);
     targetRPM += m_shooterTrim;
     m_shooterLeftMotor.setVelocity(targetRPM);
   }
@@ -192,7 +193,7 @@ public class Shooter extends SubsystemBase implements Testable {
   }
 
   public double getYawRotationalRate() {
-    double txAdjusment = Aiming.getYawTxAdjustment(LimelightHelpers.getTX(""));
+    double txAdjusment = Aiming.getYawTxAdjustment(m_frontLimelight.getTXDegrees());
     m_txAdjustmentPub.set(txAdjusment);
     return txAdjusment;
   }

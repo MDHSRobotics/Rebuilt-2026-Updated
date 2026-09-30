@@ -10,9 +10,6 @@ import org.wpilib.math.linalg.Vector;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation3d;
 import org.wpilib.math.numbers.N3;
-
-import com.ctre.phoenix6.CANBus;
-
 import org.wpilib.hardware.bus.CANPort;
 
 public final class Constants {

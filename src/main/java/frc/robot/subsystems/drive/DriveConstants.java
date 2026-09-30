@@ -95,11 +95,15 @@ public class DriveConstants {
    * We configure PathPlanner here instead of in the GUI so we can use constants from the code.
    */
 
-  /** PID Constants for PathPlanner translation. */
-  //SYSTEMCORE public static final PIDConstants TRANSLATION_PID = new PIDConstants(5.0, 0.0, 0.0);
+/** PID gains for translation control. */
+public static final double TRANSLATION_KP = 5.0;
+public static final double TRANSLATION_KI = 0.0;
+public static final double TRANSLATION_KD = 0.0;
 
-  /** PID Constants for PathPlanner rotation. */
-  //SYSTEMCORE public static final PIDConstants ROTATION_PID = new PIDConstants(5.0, 0.0, 0.0);
+/** PID gains for heading control. */
+public static final double ROTATION_KP = 5.0;
+public static final double ROTATION_KI = 0.0;
+public static final double ROTATION_KD = 0.0;
 
   /** Robot mass with battery and bumpers in kilograms */
   public static final Mass ROBOT_MASS = Kilograms.of(58.513);
@@ -146,7 +150,8 @@ public class DriveConstants {
    */
   public static final double WHEEL_COF = 1.0;
 
-  /** The swerve module config to be used for every module. */
+/*SYSTEMCORE
+  // The swerve module config to be used for every module.
   private static final ModuleConfig MODULE_CONFIG =
       new ModuleConfig(
           TunerConstants.kWheelRadius,
@@ -156,6 +161,7 @@ public class DriveConstants {
           TunerConstants.kDriveGearRatio,
           TunerConstants.kSlipCurrent,
           1);
+*/
 
   /**
    * The locations of the modules relative to the center of the robot. The order is FL, FR, BL, and
@@ -169,6 +175,7 @@ public class DriveConstants {
         new Translation2d(TunerConstants.kBackRightXPos, TunerConstants.kBackRightYPos)
       };
 
+/*SYSTEMCORE START
   public static final RobotConfig PATHPLANNER_CONFIG =
       new RobotConfig(ROBOT_MASS, ROBOT_MOI, MODULE_CONFIG, MODULE_OFFSETS);
 
@@ -181,8 +188,9 @@ public class DriveConstants {
   // public static final PathConstraints CORAL_STATION_CONSTRAINTS =
   //         new PathConstraints(4, 4, Units.degreesToRadians(540), Units.degreesToRadians(540),
   // 12);
+SYSTEMCORE END */
 
-  /* Swerve Setpoint Generator Constants */
+  // Swerve Setpoint Generator Constants */
   /**
    * The maximum angular velocity of the steer motor in radians per second.
    *
@@ -197,6 +205,8 @@ public class DriveConstants {
    * This can safely be reused by multiple swerve requests because it has no internal state (as of
    * FRC 2026).
    */
+/*SYSTEMCORE
   public static final SwerveSetpointGenerator SWERVE_SETPOINT_GENERATOR =
       new SwerveSetpointGenerator(PATHPLANNER_CONFIG, MAX_ANGULAR_VELOCITY);
+*/
 }

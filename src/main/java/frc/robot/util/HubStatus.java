@@ -33,7 +33,7 @@ public class HubStatus {
     }
 
     boolean redInactiveFirst = false;
-    switch (gameData.get().charAt(0)) {
+    switch (gameData.charAt(0)) {
       case 'R' -> redInactiveFirst = true;
       case 'B' -> redInactiveFirst = false;
       default -> {
