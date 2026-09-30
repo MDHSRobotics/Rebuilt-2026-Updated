@@ -59,7 +59,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private double m_lastSimTime;
 
   /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
-  private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
+  private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.ZERO;
   /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
   private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
   /* Keep track if we've ever applied the operator perspective before or not */
@@ -405,7 +405,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
           /*Get bot pose estimate */
           Translation2d botPose = new Translation2d(poseArray[0], poseArray[1]);
           // Whenever the robot doesn't see any tags, it will send a pose of (0,0,0)
-          if (botPose.equals(Translation2d.kZero)) {
+          if (botPose.equals(Translation2d.ZERO)) {
             m_frontVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
             return;
           }
@@ -478,7 +478,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     //       // Whenever the robot doesn't see any tags, it will send a pose of (0,0,0), so don't
     // use
     //       // the data
-    //       if (botPose.equals(Translation2d.kZero)) {
+    //       if (botPose.equals(Translation2d.ZERO)) {
     //         m_backVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
     //         m_backToTagDistancePub.set(FieldConstants.NO_TAG_DISTANCES);
     //         return;
