@@ -7,7 +7,10 @@
 
 package frc.robot.util.logging;
 
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.tunable.Selectable;
+import org.wpilib.tunable.TunableDouble;
+import org.wpilib.tunable.Tunables;
+import org.wpilib.telemetry.Telemetry;
 import frc.robot.Constants;
 
 /**
@@ -21,6 +24,8 @@ public class LoggedTunableNumber {
   private final String m_key;
   private double m_defaultValue;
   private double m_lastValue;
+  private TunableDouble m_tunable; // only created in tuning mode
+
 
   /**
    * Create a new LoggedTunableNumber with the default value
@@ -33,7 +38,7 @@ public class LoggedTunableNumber {
     this.m_defaultValue = defaultValue;
     m_lastValue = defaultValue;
     if (Constants.TUNING_MODE) {
-      SmartDashboard.setDefaultNumber(m_key, defaultValue);
+      m_tunable = Tunables.addDouble(m_key, defaultValue);
     }
   }
 
@@ -43,8 +48,8 @@ public class LoggedTunableNumber {
    * @return The current value
    */
   public double get() {
-    if (Constants.TUNING_MODE) {
-      return SmartDashboard.getNumber(m_key, m_defaultValue);
+    if (m_tunable != null) {
+      return m_tunable.get();
     }
     return m_defaultValue;
   }

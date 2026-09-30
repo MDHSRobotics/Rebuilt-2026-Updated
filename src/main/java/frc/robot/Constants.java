@@ -3,13 +3,17 @@ package frc.robot;
 import static org.wpilib.units.Units.Inches;
 import static org.wpilib.units.Units.Meters;
 
-import org.wpilib.vision.apriltag.AprilTagFieldLayout;
-import org.wpilib.vision.apriltag.AprilTagFields;
+import org.wpilib.fields.Field;
+import org.wpilib.fields.Fields;
 import org.wpilib.math.linalg.VecBuilder;
 import org.wpilib.math.linalg.Vector;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation3d;
 import org.wpilib.math.numbers.N3;
+
+import com.ctre.phoenix6.CANBus;
+
+import org.wpilib.hardware.bus.CANPort;
 
 public final class Constants {
   private Constants() {}
@@ -24,8 +28,6 @@ public final class Constants {
 
     public static final int DRIVER_CONTROLLER_PORT = 0;
     public static final int OPERATOR_CONTROLLER_PORT = 1;
-    public static final int DRIVER_CONTROLLER_RIGHT_AXIS = 4;
-    public static final int DRIVER_CONTROLLER_R2_AXIS = 3;
   }
 
   public static class VisionConstants {
@@ -79,8 +81,7 @@ public final class Constants {
     public static final double[] NO_TAG_DISTANCES = new double[0];
 
     // AprilTags poses to use for field positions
-    public static final AprilTagFieldLayout APRILTAGS =
-        AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+  public static final Field PLAYING_FIELD = Fields.FRC_2026_REBUILT_WELDED.loadField();
 
     /**
      * Rotations of the Apriltags for aligning perpendicular to them.
@@ -90,39 +91,39 @@ public final class Constants {
      * <p>Index into the array with the id number starting from 1.
      */
     public static final Rotation2d[] APRILTAG_ROTATIONS = {
-      Rotation2d.kZero,
-      APRILTAGS.getTagPose(1).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(2).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(3).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(4).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(5).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(6).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(7).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(8).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(9).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(10).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(11).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(12).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(13).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(14).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(15).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(16).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(17).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(18).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(19).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(20).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(21).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(22).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(23).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(24).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(25).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(26).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(27).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(28).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(29).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(30).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(31).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
-      APRILTAGS.getTagPose(32).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      Rotation2d.ZERO,
+      PLAYING_FIELD.getTagPose(1).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(2).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(3).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(4).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(5).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(6).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(7).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(8).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(9).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(10).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(11).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(12).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(13).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(14).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(15).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(16).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(17).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(18).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(19).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(20).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(21).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(22).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(23).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(24).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(25).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(26).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(27).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(28).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(29).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(30).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(31).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
+      PLAYING_FIELD.getTagPose(32).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
     };
 
     /**
@@ -130,5 +131,16 @@ public final class Constants {
      * searching up the april tag 2D drawing from FRC Rebuilt. Units: Inches
      */
     public static final double DISTANCE_FROM_FLOOR_TO_HUB_TAG = 44.25;
+  }
+
+  public static class BusConstants {
+    private BusConstants() {}
+
+    public static final CANPort ENERGY_MONITOR_BUS = CANPort.CAN_S0;
+    public static final CANPort INTAKE_BUS = CANPort.CAN_S0;
+    public static final CANPort HOPPER_BUS = CANPort.CAN_S0;
+    public static final CANPort SHOOTER_BUS = CANPort.CAN_S0;
+    public static final CANPort DRIVE_BUS = CANPort.CAN_S0;
+    
   }
 }

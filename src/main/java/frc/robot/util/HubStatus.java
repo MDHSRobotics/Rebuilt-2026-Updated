@@ -3,9 +3,6 @@ package frc.robot.util;
 import org.wpilib.driverstation.MatchState;
 import org.wpilib.driverstation.RobotState;
 import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
-import org.wpilib.driverstation.Alliance;
 import java.util.Optional;
 
 public class HubStatus {
@@ -28,7 +25,7 @@ public class HubStatus {
     }
 
     double matchTime = MatchState.getMatchTime();
-    String gameData = MatchState.getGameData();
+    String gameData = MatchState.getGameData().get();
 
     if (gameData.isEmpty()) {
       return true;
@@ -45,8 +42,8 @@ public class HubStatus {
 
     boolean shift1Active =
         switch (alliance.get()) {
-          case Red -> !redInactiveFirst;
-          case Blue -> redInactiveFirst;
+          case RED -> !redInactiveFirst;
+          case BLUE -> redInactiveFirst;
         };
 
     // Shift time windows: each entry is {start, end} in match time (counting down).

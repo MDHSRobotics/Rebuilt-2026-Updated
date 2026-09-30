@@ -26,7 +26,8 @@ import org.wpilib.system.Tracer;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.CommandScheduler;
 import frc.robot.Constants.VisionConstants;
-import frc.robot.util.Elastic;
+//SYSTEMCOREimport frc.robot.util.Elastic;
+//SYSTEMCORE import frc.robot.util.Elastic;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.logging.LoggableSparkFlex;
 //import org.littletonrobotics.urcl.URCL;
@@ -81,7 +82,7 @@ public class Robot extends TimedRobot {
     // Create the webserver for accessing Elastic's saved layout across computers
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
     // Initially open the Autonomous tab in Elastic; it will be swapped to Teleop later
-    Elastic.selectTab("Autonomous");
+    //SYSTEMCORE Elastic.selectTab("Autonomous");
 
     m_robotContainer = new RobotContainer();
   }
@@ -157,7 +158,7 @@ public class Robot extends TimedRobot {
     // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
     // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
-    Elastic.selectTab("Teleoperated");
+    //SYSTEMCORE Elastic.selectTab("Teleoperated");
   }
 
   @Override

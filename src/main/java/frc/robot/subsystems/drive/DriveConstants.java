@@ -2,10 +2,10 @@ package frc.robot.subsystems.drive;
 
 import static org.wpilib.units.Units.*;
 
-import com.pathplanner.lib.config.ModuleConfig;
-import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
+//SYSTEMCORE import com.pathplanner.lib.config.ModuleConfig;
+//SYSTEMCORE import com.pathplanner.lib.config.PIDConstants;
+//SYSTEMCORE import com.pathplanner.lib.config.RobotConfig;
+//SYSTEMCORE import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.math.trajectory.TrapezoidProfile;
@@ -96,10 +96,10 @@ public class DriveConstants {
    */
 
   /** PID Constants for PathPlanner translation. */
-  public static final PIDConstants TRANSLATION_PID = new PIDConstants(5.0, 0.0, 0.0);
+  //SYSTEMCORE public static final PIDConstants TRANSLATION_PID = new PIDConstants(5.0, 0.0, 0.0);
 
   /** PID Constants for PathPlanner rotation. */
-  public static final PIDConstants ROTATION_PID = new PIDConstants(5.0, 0.0, 0.0);
+  //SYSTEMCORE public static final PIDConstants ROTATION_PID = new PIDConstants(5.0, 0.0, 0.0);
 
   /** Robot mass with battery and bumpers in kilograms */
   public static final Mass ROBOT_MASS = Kilograms.of(58.513);
