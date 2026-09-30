@@ -26,7 +26,6 @@ import org.wpilib.system.Tracer;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.CommandScheduler;
 import frc.robot.Constants.VisionConstants;
-//SYSTEMCOREimport frc.robot.util.Elastic;
 //SYSTEMCORE import frc.robot.util.Elastic;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.logging.LoggableSparkFlex;

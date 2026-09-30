@@ -30,6 +30,18 @@ public final class Constants {
     public static final int OPERATOR_CONTROLLER_PORT = 1;
   }
 
+  public static class CanBusConstants {
+
+    private CanBusConstants() {}
+
+    // CAN bus for subsystems and other electrical components
+    // Ports S0-S4 are Systemcore CAN buses.  
+    public static final CANPort SHOOTER_CAN_BUS = CANPort.CAN_S0;
+    public static final CANPort HOPPER_CAN_BUS = CANPort.CAN_S0; 
+    public static final CANPort INTAKE_CAN_BUS = CANPort.CAN_S0;
+    public static final CANPort POWER_DISTRIBUTION_CAN_BUS = CANPort.CAN_S0;
+  }
+
   public static class VisionConstants {
     private VisionConstants() {}
 
@@ -80,8 +92,9 @@ public final class Constants {
     public static final Translation3d[] NO_VISIBLE_TAGS = new Translation3d[0];
     public static final double[] NO_TAG_DISTANCES = new double[0];
 
-    // AprilTags poses to use for field positions
-  public static final Field PLAYING_FIELD = Fields.FRC_2026_REBUILT_WELDED.loadField();
+    // The field contains april tag and other information about the layout of the playing field.
+    public static final Field PLAYING_FIELD =
+        Field.loadField(Fields.FRC_2026_REBUILT_WELDED);
 
     /**
      * Rotations of the Apriltags for aligning perpendicular to them.

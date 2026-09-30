@@ -18,7 +18,7 @@ import org.wpilib.networktables.StructPublisher;
 import org.wpilib.system.Timer;
 import org.wpilib.smartdashboard.Mechanism2d;
 import org.wpilib.smartdashboard.MechanismLigament2d;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
 import frc.robot.Constants.VisionConstants;
@@ -37,7 +37,7 @@ public class DriveTelemetry {
 
     /* Set up the module state Mechanism2d telemetry */
     for (int i = 0; i < 4; ++i) {
-      SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
+      Telemetry.log("Module " + i, m_moduleMechanisms[i]);
     }
   }
 

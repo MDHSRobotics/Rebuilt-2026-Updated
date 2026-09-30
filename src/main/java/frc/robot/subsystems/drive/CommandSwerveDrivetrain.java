@@ -441,7 +441,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             int id = (int) poseArray[currentIndex];
             double distance = poseArray[currentIndex + 4];
             visibleTagPositions[i] =
-                FieldConstants.APRILTAGS.getTagPose(id).orElseThrow().getTranslation();
+                FieldConstants.PLAYING_FIELD.getTagPose(id).orElseThrow().getTranslation();
             distanceToTags[i] = distance;
           }
           m_frontVisibleTagsPub.set(visibleTagPositions, timestampMicroseconds);
@@ -514,7 +514,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     //         int id = (int) poseArray[currentIndex];
     //         double distance = poseArray[currentIndex + 4];
     //         visibleTagPositions[i] =
-    //             FieldConstants.APRILTAGS.getTagPose(id).orElseThrow().getTranslation();
+    //             FieldConstants.PLAYING_FIELD.getTagPose(id).orElseThrow().getTranslation();
     //         distanceToTags[i] = distance;
     //       }
     //       m_backVisibleTagsPub.set(visibleTagPositions, timestampMicroseconds);
