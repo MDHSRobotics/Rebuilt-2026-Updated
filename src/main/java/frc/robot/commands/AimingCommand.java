@@ -8,13 +8,8 @@ import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.networktables.StructPublisher;
 import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.command2.Command;
-import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
@@ -37,10 +32,8 @@ public class AimingCommand {
   // Swerve Request
   private final DriveFacingAngle m_driveFacingAngle =
       new DriveFacingAngle(
-              DriveConstants.ROTATION_PID.kP,
-              DriveConstants.MAX_ANGULAR_VELOCITY,
-              DriveConstants.SWERVE_SETPOINT_GENERATOR,
-              Constants.UPDATE_PERIOD)
+              DriveConstants.ROTATION_KP,
+              DriveConstants.MAX_ANGULAR_VELOCITY)
           .withTolerance(DriveConstants.HEADING_TOLERANCE)
           .withDriveRequestType(DriveRequestType.Velocity)
           .withSteerRequestType(SteerRequestType.MotionMagicExpo);

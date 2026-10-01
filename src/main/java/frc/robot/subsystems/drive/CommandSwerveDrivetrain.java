@@ -9,8 +9,8 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+//SYSTEMCORE import com.pathplanner.lib.auto.AutoBuilder;
+//SYSTEMCORE import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import org.wpilib.math.linalg.Matrix;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
@@ -25,6 +25,7 @@ import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableEvent;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.networktables.NetworkTableValue;
+import org.wpilib.networktables.NetworkTablesJNI;
 import org.wpilib.networktables.StructArrayPublisher;
 import org.wpilib.networktables.StructPublisher;
 import org.wpilib.driverstation.MatchState;
@@ -64,11 +65,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
   /* Keep track if we've ever applied the operator perspective before or not */
   private boolean m_hasAppliedOperatorPerspective = false;
+
   /*Swerve request to apply during robot-centric path following */
-  private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds =
-      new SwerveRequest.ApplyRobotSpeeds()
-          .withDriveRequestType(DriveRequestType.Velocity)
-          .withSteerRequestType(SteerRequestType.Position);
+  /* SYSTEMCORE BEGIN
+  private final SwerveRequest.ApplyRobotVelocity m_pathApplyRobotVelocity =
+    new SwerveRequest.ApplyRobotVelocity()
+        .withDriveRequestType(DriveRequestType.Velocity)
+        .withSteerRequestType(SteerRequestType.Position);
+  SYSTEMCORE END*/
 
   /* Swerve requests to apply during SysId characterization */
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
@@ -265,6 +269,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   private void configureAutoBuilder() {
+    /*SYSTEMCORE BEGIN
     AutoBuilder.configure(
         () -> getState().Pose, // Supplier of current robot pose
         this::resetPose, // Consumer for seeding pose against auto
@@ -273,7 +278,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         (speeds, feedforwards) -> {
           ;
           setControl(
-              m_pathApplyRobotSpeeds
+              m_pathApplyRobotVelocity
                   .withSpeeds(speeds)
                   .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                   .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons()));
@@ -284,6 +289,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         () -> MatchState.getAlliance().orElse(Alliance.BLUE) == Alliance.RED,
         this // Subsystem for requirements
         );
+    SYSTEMCORE END*/
   }
 
   /**
@@ -330,8 +336,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     return m_sysIdRoutineToApply.dynamic(direction);
   }
 
-  @Override
-  public void periodic() {
+@Override
+public void periodic() {
     /*
      * Periodically try to apply the operator perspective.
      * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -339,11 +345,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * Otherwise, only check and apply the operator perspective if the DS is disabled.
      * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
      */
+
     if (!m_hasAppliedOperatorPerspective || RobotState.isDisabled()) {
       MatchState.getAlliance()
           .ifPresent(
               allianceColor -> {
-                setOperatorPerspectiveForward(
+                setOperatorForwardDirection(
                     allianceColor == Alliance.RED
                         ? kRedAlliancePerspectiveRotation
                         : kBlueAlliancePerspectiveRotation);
@@ -391,7 +398,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     m_inst.addListener(
         frontPoseEstimateSub,
-        EnumSet.of(NetworkTableEvent.Kind.kValueAll),
+        EnumSet.of(NetworkTableEvent.Kind.VALUE_ALL),
         event -> {
           NetworkTableValue value = event.valueData.value;
           double[] poseArray = value.getDoubleArray();
@@ -412,15 +419,23 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
           Rotation2d botRotation = Rotation2d.fromDegrees(poseArray[5]);
           Pose2d botPoseEstimate = new Pose2d(botPose, botRotation);
 
-          /*Get timestamped */
-          long timestampMicroseconds = value.getTime();
+          /* Get timestamp */
+          long timestampNanoseconds = value.getTime();
 
-          /*Log pose estimate to AdvantageScope */
-          m_frontPoseEstimatePub.set(botPoseEstimate, timestampMicroseconds);
+          /* Log pose estimate to AdvantageScope */
+          m_frontPoseEstimatePub.set(botPoseEstimate, timestampNanoseconds);
 
-          // Convert timestamp from microseconds to seconds and adjust for latency
-          double latency = poseArray[6];
-          double adjustedTimestamp = (timestampMicroseconds / 1000000.0) - (latency / 1000.0);
+          // Convert the NetworkTables timestamp to the CTRE current-time timebase
+          // and adjust for Limelight latency.
+          double latencySeconds = poseArray[6] / 1000.0;
+
+          double ntNowSeconds = NetworkTablesJNI.now() / 1_000_000_000.0;
+          double ctreNowSeconds = Utils.getCurrentTimeSeconds();
+
+          double visionTimestampSeconds =
+              ctreNowSeconds
+                  - (ntNowSeconds - timestampNanoseconds / 1_000_000_000.0)
+                  - latencySeconds;
 
           /*Log which apriltags are currently visible */
           int tagCount = (int) poseArray[7];
@@ -441,16 +456,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             int id = (int) poseArray[currentIndex];
             double distance = poseArray[currentIndex + 4];
             visibleTagPositions[i] =
-                FieldConstants.APRILTAGS.getTagPose(id).orElseThrow().getTranslation();
+                FieldConstants.PLAYING_FIELD.getTagPose(id).orElseThrow().getTranslation();
             distanceToTags[i] = distance;
           }
-          m_frontVisibleTagsPub.set(visibleTagPositions, timestampMicroseconds);
-          m_frontToTagDistancePub.set(distanceToTags, timestampMicroseconds);
+          m_frontVisibleTagsPub.set(visibleTagPositions, timestampNanoseconds);
+          m_frontToTagDistancePub.set(distanceToTags, timestampNanoseconds);
 
-          /*Add the vision measurement to the pose estimator */
+          /* Add the vision measurement to the pose estimator */
+          // SYSTEMCORE: Verify NT local-time epoch matches CTRE current-time epoch.
           this.addVisionMeasurement(
               botPoseEstimate,
-              Utils.fpgaToCurrentTime(adjustedTimestamp),
+              visionTimestampSeconds,
               VisionConstants.FRONT_STD_DEVS);
         });
 
@@ -514,7 +530,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     //         int id = (int) poseArray[currentIndex];
     //         double distance = poseArray[currentIndex + 4];
     //         visibleTagPositions[i] =
-    //             FieldConstants.APRILTAGS.getTagPose(id).orElseThrow().getTranslation();
+    //             FieldConstants.PLAYING_FIELD.getTagPose(id).orElseThrow().getTranslation();
     //         distanceToTags[i] = distance;
     //       }
     //       m_backVisibleTagsPub.set(visibleTagPositions, timestampMicroseconds);
@@ -535,10 +551,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
    * @param visionRobotPoseMeters The pose of the robot as measured by the vision camera.
    * @param timestampSeconds The timestamp of the vision measurement in seconds.
    */
+  /* SYSTEMCORE BEGIN
   @Override
   public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
     super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds));
   }
+  SYSTEMCORE END */
 
   /**
    * Adds a vision measurement to the Kalman Filter. This will correct the odometry pose estimate
@@ -553,6 +571,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
    * @param visionMeasurementStdDevs Standard deviations of the vision pose measurement in the form
    *     [x, y, theta]ᵀ, with units in meters and radians.
    */
+  /* SYSTEMCORE BEGIN
   @Override
   public void addVisionMeasurement(
       Pose2d visionRobotPoseMeters,
@@ -561,6 +580,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     super.addVisionMeasurement(
         visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
   }
+  SYSTEMCORE END */
 
   /**
    * Return the pose at a given timestamp, if the buffer is not empty.
@@ -568,8 +588,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
    * @param timestampSeconds The timestamp of the pose in seconds.
    * @return The pose at the given timestamp (or Optional.empty() if the buffer is empty).
    */
+  /* SYSTEMCORE BEGIN
   @Override
   public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
     return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
   }
+    SYSTEMCORE END */
 }

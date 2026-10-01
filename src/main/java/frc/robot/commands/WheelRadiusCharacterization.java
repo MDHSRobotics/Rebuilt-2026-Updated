@@ -51,8 +51,9 @@ public class WheelRadiusCharacterization {
     SwerveModule<TalonFX, TalonFX, CANcoder>[] modules = drivetrain.getModules();
     SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
     WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
-    SwerveRequest.ApplyRobotSpeeds chassisSpeedsRequest =
-        new SwerveRequest.ApplyRobotSpeeds()
+
+    SwerveRequest.ApplyRobotVelocity chassisVelocityRequest =
+        new SwerveRequest.ApplyRobotVelocity()
             .withDriveRequestType(DriveRequestType.Velocity)
             .withSteerRequestType(SteerRequestType.MotionMagicExpo);
 
@@ -70,7 +71,7 @@ public class WheelRadiusCharacterization {
                 () -> {
                   double speed = limiter.calculate(WHEEL_RADIUS_MAX_VELOCITY);
                   drivetrain.setControl(
-                      chassisSpeedsRequest.withSpeeds(new ChassisVelocities(0, 0, speed)));
+                      chassisVelocityRequest.withVelocity(new ChassisVelocities(0, 0, speed)));
                 },
                 drivetrain)),
 

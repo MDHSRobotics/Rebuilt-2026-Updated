@@ -14,6 +14,7 @@ public class HubStatus {
   /** This method is used to determine if the Hub is active including a pre and post time */
   public static boolean isHubActive(double pre, double post) {
     Optional<Alliance> alliance = MatchState.getAlliance();
+    
     if (alliance.isEmpty()) {
       return false;
     }
