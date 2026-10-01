@@ -1,7 +1,6 @@
 package frc.robot.subsystems.intake;
 
 import org.wpilib.command2.SubsystemBase;
-import org.wpilib.hardware.bus.CANPort;
 
 public class IntakeConstants extends SubsystemBase {
   private IntakeConstants() {}

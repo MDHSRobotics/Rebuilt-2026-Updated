@@ -19,7 +19,6 @@ import frc.robot.util.Testable;
 import frc.robot.util.logging.LoggableSparkFlex;
 import frc.robot.util.logging.LoggableSparkFlex.EncoderType;
 import frc.robot.util.logging.LoggableSparkFlex.LoggedValue;
-import frc.robot.Constants;
 
 public class Hopper extends SubsystemBase implements Testable {
 
