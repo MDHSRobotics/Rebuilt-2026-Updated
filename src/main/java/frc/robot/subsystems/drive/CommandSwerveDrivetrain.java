@@ -345,11 +345,12 @@ public void periodic() {
      * Otherwise, only check and apply the operator perspective if the DS is disabled.
      * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
      */
+
     if (!m_hasAppliedOperatorPerspective || RobotState.isDisabled()) {
       MatchState.getAlliance()
           .ifPresent(
               allianceColor -> {
-                setOperatorPerspectiveForward(
+                setOperatorForwardDirection(
                     allianceColor == Alliance.RED
                         ? kRedAlliancePerspectiveRotation
                         : kBlueAlliancePerspectiveRotation);
