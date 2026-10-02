@@ -2,10 +2,12 @@ package frc.robot.subsystems.drive;
 
 import static org.wpilib.units.Units.*;
 
-//SYSTEMCORE import com.pathplanner.lib.config.ModuleConfig;
-//SYSTEMCORE import com.pathplanner.lib.config.PIDConstants;
-//SYSTEMCORE import com.pathplanner.lib.config.RobotConfig;
-//SYSTEMCORE import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
+import com.pathplanner.lib.path.PathConstraints;
+import org.wpilib.math.util.Units;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.math.trajectory.TrapezoidProfile;
@@ -95,15 +97,11 @@ public class DriveConstants {
    * We configure PathPlanner here instead of in the GUI so we can use constants from the code.
    */
 
-/** PID gains for translation control. */
-public static final double TRANSLATION_KP = 5.0;
-public static final double TRANSLATION_KI = 0.0;
-public static final double TRANSLATION_KD = 0.0;
+  /** PID Constants for PathPlanner translation. */
+  public static final PIDConstants TRANSLATION_PID = new PIDConstants(5.0, 0.0, 0.0);
 
-/** PID gains for heading control. */
-public static final double ROTATION_KP = 5.0;
-public static final double ROTATION_KI = 0.0;
-public static final double ROTATION_KD = 0.0;
+  /** PID Constants for PathPlanner rotation. */
+  public static final PIDConstants ROTATION_PID = new PIDConstants(5.0, 0.0, 0.0);
 
   /** Robot mass with battery and bumpers in kilograms */
   public static final Mass ROBOT_MASS = Kilograms.of(58.513);
@@ -150,7 +148,7 @@ public static final double ROTATION_KD = 0.0;
    */
   public static final double WHEEL_COF = 1.0;
 
-/*SYSTEMCORE
+
   // The swerve module config to be used for every module.
   private static final ModuleConfig MODULE_CONFIG =
       new ModuleConfig(
@@ -161,7 +159,7 @@ public static final double ROTATION_KD = 0.0;
           TunerConstants.kDriveGearRatio,
           TunerConstants.kSlipCurrent,
           1);
-*/
+
 
   /**
    * The locations of the modules relative to the center of the robot. The order is FL, FR, BL, and
@@ -175,20 +173,19 @@ public static final double ROTATION_KD = 0.0;
         new Translation2d(TunerConstants.kBackRightXPos, TunerConstants.kBackRightYPos)
       };
 
-/*SYSTEMCORE START
+
   public static final RobotConfig PATHPLANNER_CONFIG =
       new RobotConfig(ROBOT_MASS, ROBOT_MOI, MODULE_CONFIG, MODULE_OFFSETS);
 
-  // public static final PathConstraints ON_THE_FLY_CONSTRAINTS = new PathConstraints(
-  //         LINEAR_MOTION_CONSTRAINTS.maxVelocity,
-  //         LINEAR_MOTION_CONSTRAINTS.maxAcceleration,
-  //         Units.degreesToRadians(540),
-  //         Units.degreesToRadians(540),
-  //         12);
-  // public static final PathConstraints CORAL_STATION_CONSTRAINTS =
-  //         new PathConstraints(4, 4, Units.degreesToRadians(540), Units.degreesToRadians(540),
-  // 12);
-SYSTEMCORE END */
+   public static final PathConstraints ON_THE_FLY_CONSTRAINTS = new PathConstraints(
+           LINEAR_MOTION_CONSTRAINTS.maxVelocity,
+           LINEAR_MOTION_CONSTRAINTS.maxAcceleration,
+           Units.degreesToRadians(540),
+           Units.degreesToRadians(540),
+           12);
+   public static final PathConstraints CORAL_STATION_CONSTRAINTS =
+           new PathConstraints(4, 4, Units.degreesToRadians(540), Units.degreesToRadians(540),
+  12);
 
   // Swerve Setpoint Generator Constants */
   /**
@@ -205,8 +202,8 @@ SYSTEMCORE END */
    * This can safely be reused by multiple swerve requests because it has no internal state (as of
    * FRC 2026).
    */
-/*SYSTEMCORE
+
   public static final SwerveSetpointGenerator SWERVE_SETPOINT_GENERATOR =
       new SwerveSetpointGenerator(PATHPLANNER_CONFIG, MAX_ANGULAR_VELOCITY);
-*/
+
 }

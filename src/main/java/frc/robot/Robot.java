@@ -9,7 +9,7 @@ import static org.wpilib.units.Units.Meters;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 
-//import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.commands.FollowPathCommand;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.net.WebServer;

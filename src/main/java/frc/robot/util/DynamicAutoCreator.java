@@ -2,9 +2,9 @@ package frc.robot.util;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-//SYSTEMCORE import com.pathplanner.lib.auto.AutoBuilder;
-//SYSTEMCORE import com.pathplanner.lib.path.PathPlannerPath;
-//SYSTEMCORE import com.pathplanner.lib.util.FlippingUtil;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.FlippingUtil;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.driverstation.MatchState;
@@ -97,11 +97,11 @@ public class DynamicAutoCreator {
       m_dynamicAutoSequence = null;
     } else {
       // Create a dynamic command based on current settings of auto parameters
-      //SYSTEMCORE createOneShootingSequenceAuto();
+      createOneShootingSequenceAuto();
     }
   }
 
-  /*SYSTEMCORE BEGIN
+
   private void createOneShootingSequenceAuto() {
     try {
       String pathName = m_startingPositionChooser.getSelected();
@@ -124,7 +124,7 @@ public class DynamicAutoCreator {
       return;
     }
   }
-  SYSTEMCORE END */
+
 
   public Command createShootingAutoSequence() {
     Command auto_command =
@@ -168,7 +168,6 @@ public class DynamicAutoCreator {
     return auto_command;
   }
 
-  /*SYSTEMCORE BEGIN
   public Command resetOdometryCommand(Pose2d startingPose) {
     return Commands.runOnce(
         () -> {
@@ -180,7 +179,6 @@ public class DynamicAutoCreator {
         });
   }
 
-  SYSTEMCORE END */
 
   /* This method returns the dynamicly-generated auto command based on
    * options set in the dashboard. If no settings have been selected, return null.
