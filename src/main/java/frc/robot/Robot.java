@@ -13,7 +13,7 @@ import java.nio.file.Path;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 
-//PATHPLANNER import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.commands.FollowPathCommand;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.net.WebServer;

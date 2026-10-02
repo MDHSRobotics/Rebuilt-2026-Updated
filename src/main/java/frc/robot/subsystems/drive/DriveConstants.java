@@ -148,7 +148,7 @@ public class DriveConstants {
    */
   public static final double WHEEL_COF = 1.0;
 
-/*PATHPALNNER
+
   // The swerve module config to be used for every module.
   private static final ModuleConfig MODULE_CONFIG =
       new ModuleConfig(
@@ -159,7 +159,7 @@ public class DriveConstants {
           TunerConstants.kDriveGearRatio,
           TunerConstants.kSlipCurrent,
           1);
-*/
+
 
   /**
    * The locations of the modules relative to the center of the robot. The order is FL, FR, BL, and
@@ -173,7 +173,7 @@ public class DriveConstants {
         new Translation2d(TunerConstants.kBackRightXPos, TunerConstants.kBackRightYPos)
       };
 
-/*PATHPALNNER
+
   public static final RobotConfig PATHPLANNER_CONFIG =
       new RobotConfig(ROBOT_MASS, ROBOT_MOI, MODULE_CONFIG, MODULE_OFFSETS);
 
@@ -186,7 +186,6 @@ public class DriveConstants {
    public static final PathConstraints CORAL_STATION_CONSTRAINTS =
            new PathConstraints(4, 4, Units.degreesToRadians(540), Units.degreesToRadians(540),
   12);
-*/
 
   // Swerve Setpoint Generator Constants */
   /**
@@ -204,10 +203,8 @@ public class DriveConstants {
    * FRC 2026).
    */
 
-/*PATHPLANNER
   public static final SwerveSetpointGenerator SWERVE_SETPOINT_GENERATOR =
       new SwerveSetpointGenerator(PATHPLANNER_CONFIG, MAX_ANGULAR_VELOCITY);
 
-      */
 }
       
