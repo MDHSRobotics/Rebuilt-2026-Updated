@@ -168,12 +168,12 @@ public class Shooter extends SubsystemBase implements Testable {
 
   public void shootBall() {
     rampUpShooter();
-    m_kickerMotor.setVelocity(ShooterConstants.KICKER_SPEED);
+    m_kickerMotor.setThrottle(ShooterConstants.KICKER_SPEED);
   }
 
   public void shootBall(double rpm) {
     rampUpShooter(rpm);
-    m_kickerMotor.setVelocity(ShooterConstants.KICKER_SPEED);
+    m_kickerMotor.setThrottle(ShooterConstants.KICKER_SPEED);
   }
 
   public void changeTrim(double amount) {

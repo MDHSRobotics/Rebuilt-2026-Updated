@@ -150,7 +150,7 @@ public final class Constants {
     public static final CANPort INTAKE_BUS = CANPort.CAN_S0;
     public static final CANPort HOPPER_BUS = CANPort.CAN_S0;
     public static final CANPort SHOOTER_BUS = CANPort.CAN_S0;
-    public static final CANPort DRIVE_BUS = CANPort.CAN_S0;
+    public static final CANPort DRIVE_BUS = CANPort.CAN_S1;
     
   }
 }
