@@ -34,12 +34,11 @@ public class Aiming {
    *
    * @param slope The Slope value taken from ShooterConstants file
    * @param intercept The shooter's base RPM
-   * @param ty The limelight's ty value when looking at a tag
-   * @param tid The tag the apriltag is looking at
+   * @param distance The distance from the robot to the target
    * @return The target RPM calculate based on the distance of the robot to the hub
    */
   public static double calculateShooterRPM(
-      double slope, double intercept, double distance, double tid) {
+      double slope, double intercept, double distance) {
     double targetRPM = slope * distance + intercept;
     return targetRPM;
   }
@@ -49,11 +48,10 @@ public class Aiming {
    *
    * @param polynomial The polnomial to be used
    * @param distance The limelight's distance value when looking at a tag
-   * @param tid The tag the apriltag is looking at
    * @return The target RPM calculate based on the distance of the robot to the hub
    */
   public static double calculateShooterRPM(
-      PolynomialInterpolation polynomial, double distance, double tid) {
+      PolynomialInterpolation polynomial, double distance) {
     double targetRPM = polynomial.evaluate(distance);
     return targetRPM;
   }

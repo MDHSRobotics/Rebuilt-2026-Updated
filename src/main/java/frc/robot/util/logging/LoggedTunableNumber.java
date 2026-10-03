@@ -34,11 +34,15 @@ public class LoggedTunableNumber {
    * @param defaultValue Default value
    */
   public LoggedTunableNumber(String dashboardKey, double defaultValue) {
+
     m_key = "Tuning/" + dashboardKey;
     this.m_defaultValue = defaultValue;
     m_lastValue = defaultValue;
+
     if (Constants.TUNING_MODE) {
       m_tunable = Tunables.addDouble(m_key, defaultValue);
+    } else { 
+      m_tunable = null;
     }
   }
 

@@ -8,6 +8,9 @@ import com.ctre.phoenix6.hardware.*;
 import com.ctre.phoenix6.signals.*;
 import com.ctre.phoenix6.swerve.*;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.*;
+
+import frc.robot.Constants.BusConstants;
+
 import org.wpilib.math.linalg.Matrix;
 import org.wpilib.math.numbers.N1;
 import org.wpilib.math.numbers.N3;
@@ -116,7 +119,7 @@ public class TunerConstants {
 
   public static final SwerveDrivetrainConstants DrivetrainConstants =
       new SwerveDrivetrainConstants()
-          .withCANBusName(kCANBus.getName())
+          .withNetwork(new CANBus(BusConstants.DRIVE_BUS))
           .withPigeon2Id(kPigeonId)
           .withPigeon2Configs(pigeonConfigs);
 

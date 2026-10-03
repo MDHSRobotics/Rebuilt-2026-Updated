@@ -6,7 +6,7 @@ import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveControlParameters;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.utility.PhoenixPIDController;
-import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
+//SYSTEMCORE import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import org.wpilib.math.util.MathUtil;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
@@ -91,6 +91,8 @@ public class DriveFacingAngle implements ResettableSwerveRequest {
    * @param swerveSetpointGenerator The Swerve Setpoint Generator to use when driving.
    * @param updatePeriod The amount of time between robot updates in seconds.
    */
+
+  /*SYSTEMCORE
   public DriveFacingAngle(
       double kRotationP,
       double maxAngularVelocity,
@@ -102,6 +104,7 @@ public class DriveFacingAngle implements ResettableSwerveRequest {
     m_headingController.enableContinuousInput(-Math.PI, Math.PI);
     m_maxAngularVelocity = Math.abs(maxAngularVelocity);
   }
+    */
 
   /**
    * @see
@@ -132,6 +135,8 @@ public class DriveFacingAngle implements ResettableSwerveRequest {
     if (m_headingController.atSetpoint()) {
       toApplyOmega = 0;
       m_motionIsFinished = true;
+    } else {
+      m_motionIsFinished = false;
     }
 
     // NetworkTables logging

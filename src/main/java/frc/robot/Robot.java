@@ -7,12 +7,15 @@ package frc.robot;
 import static org.wpilib.units.Units.Meters;
 
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.Utils;
+
 //import com.pathplanner.lib.commands.FollowPathCommand;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.net.WebServer;
 import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.NetworkTablesJNI;
 import org.wpilib.system.DataLogManager;
 import org.wpilib.driverstation.MatchState;
 //import org.wpilib.driverstation.RobotState;
@@ -26,11 +29,11 @@ import org.wpilib.system.Tracer;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.CommandScheduler;
 import frc.robot.Constants.VisionConstants;
-//SYSTEMCOREimport frc.robot.util.Elastic;
 //SYSTEMCORE import frc.robot.util.Elastic;
-import frc.robot.util.LimelightHelpers;
+import com.limelightvision.Limelight;
+import com.limelightvision.IMUMode;
 import frc.robot.util.logging.LoggableSparkFlex;
-//import org.littletonrobotics.urcl.URCL;
+//SYSTEMCORE import org.littletonrobotics.urcl.URCL;
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
@@ -38,6 +41,8 @@ public class Robot extends TimedRobot {
   private final RobotContainer m_robotContainer;
   private DoublePublisher m_matchTimePub;
   private boolean m_hasAppliedRobotRotation;
+
+  private Limelight m_frontLimelight;
 
   private final Tracer m_tracer = new Tracer();
 
@@ -49,26 +54,22 @@ public class Robot extends TimedRobot {
 
     m_matchTimePub = NetworkTableInstance.getDefault().getDoubleTopic("Match Time").publish();
 
+    m_frontLimelight = new Limelight(VisionConstants.FRONT_LIMELIGHT_NAME);
+
     // Configure Limelight Positions
-    LimelightHelpers.setCameraPose_RobotSpace(
-        VisionConstants.FRONT_LIMELIGHT_NAME,
+    m_frontLimelight.setCameraPose_RobotSpaceOverride(
         VisionConstants.FRONT_LIMELIGHT_FORWARD_DISTANCE,
-        0,
+        0.,
         VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
-        0,
+        0.,
         VisionConstants.FRONT_LIMELIGHT_PITCH,
-        0);
-    // LimelightHelpers.setCameraPose_RobotSpace(
-    //     VisionConstants.BACK_LIMELIGHT_NAME,
-    //     VisionConstants.BACK_LIMELIGHT_FORWARD_DISTANCE,
-    //     0,
-    //     VisionConstants.BACK_LIMELIGHT_UP_DISTANCE,
-    //     0,
-    //     0,
-    //     VisionConstants.BACK_LIMELIGHT_YAW);
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 1);
-    // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 1);
-    LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 200);
+        0.,
+        true);
+
+    //SYSTEMCORE: The previous setimumode call passed in a value of 1 (external IMU, seed internal IMU?)
+    m_frontLimelight.setIMUMode(IMUMode.EXTERNAL_SEED_INTERNAL);
+
+    m_frontLimelight.setThrottle(200);
     // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
 
     SignalLogger.setPath("/media/sda1/logs/");
@@ -83,6 +84,10 @@ public class Robot extends TimedRobot {
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
     // Initially open the Autonomous tab in Elastic; it will be swapped to Teleop later
     //SYSTEMCORE Elastic.selectTab("Autonomous");
+
+    //SYSTEMCORE: This is to make sure that we are passing in the correct time epoch into AddVisionMeasurement in the CommandSwerveDrivetrain subsystem.  
+    System.out.println("NT time = " + NetworkTablesJNI.now() / 1_000_000_000.0);
+    System.out.println("CTRE time = " + Utils.getCurrentTimeSeconds());
 
     m_robotContainer = new RobotContainer();
   }
@@ -117,8 +122,8 @@ public class Robot extends TimedRobot {
         m_hasAppliedRobotRotation = true;
       }
     }
-
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 1);
+    //SYSTEMCORE: The previous setimumode call passed in a value of 1 (external IMU, seed internal IMU)
+    m_frontLimelight.setIMUMode(IMUMode.EXTERNAL_SEED_INTERNAL);
   }
 
   @Override
@@ -134,10 +139,10 @@ public class Robot extends TimedRobot {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
 
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
-    // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
-    LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
-    // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
+    //SYSTEMCORE: The previous setimumode call passed in a value of 4 (internal IMU assisted by external IMU?)
+    m_frontLimelight.setIMUMode(IMUMode.INTERNAL_EXTERNAL_ASSIST);
+
+    m_frontLimelight.setThrottle(0);
   }
 
   @Override
@@ -145,7 +150,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousExit() {
-    LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 200);
+    m_frontLimelight.setThrottle(200);
   }
 
   @Override
@@ -154,10 +159,9 @@ public class Robot extends TimedRobot {
       CommandScheduler.getInstance().cancel(m_autonomousCommand);
     }
 
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
-    // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
-    LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
-    // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
+    m_frontLimelight.setIMUMode(IMUMode.INTERNAL_EXTERNAL_ASSIST);
+    m_frontLimelight.setThrottle(0);
+
     //SYSTEMCORE Elastic.selectTab("Teleoperated");
   }
 
@@ -170,10 +174,11 @@ public class Robot extends TimedRobot {
   @Override
   public void utilityInit() {
     CommandScheduler.getInstance().cancelAll();
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
-    // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
-    LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
-    // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
+
+
+    m_frontLimelight.setIMUMode(IMUMode.INTERNAL_EXTERNAL_ASSIST);
+    m_frontLimelight.setThrottle(0);
+
     m_robotContainer.resetFieldPosition(
         new Pose2d(Meters.of(0), Meters.of(0), Rotation2d.fromDegrees(180)));
   }
@@ -184,10 +189,10 @@ public class Robot extends TimedRobot {
   @Override
   public void utilityExit() {
     SignalLogger.stop();
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 1);
-    // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 1);
-    LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 200);
-    // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
+
+    m_frontLimelight.setIMUMode(IMUMode.EXTERNAL_SEED_INTERNAL);
+    m_frontLimelight.setThrottle(200);
+
   }
 
   @Override
