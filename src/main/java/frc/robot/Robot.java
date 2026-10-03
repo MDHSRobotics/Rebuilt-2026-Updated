@@ -117,7 +117,7 @@ public class Robot extends TimedRobot {
     DataLogManager.logConsoleOutput(true);
 
     //URCL.start();
-    //PATHPLANNER CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+    CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     m_hasAppliedRobotRotation = false;
 
     // Create the webserver for accessing Elastic's saved layout across computers
