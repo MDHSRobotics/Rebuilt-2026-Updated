@@ -35,9 +35,10 @@ public class AimingCommand {
   private final DriveFacingAngle m_driveFacingAngle =
       new DriveFacingAngle(
               DriveConstants.ROTATION_PID.kP,
-              DriveConstants.MAX_ANGULAR_VELOCITY,
-              DriveConstants.SWERVE_SETPOINT_GENERATOR,
-              Constants.UPDATE_PERIOD)
+              DriveConstants.MAX_ANGULAR_VELOCITY
+              //PATHPLANNER DriveConstants.SWERVE_SETPOINT_GENERATOR,
+              //PATHPLANNER Constants.UPDATE_PERIOD
+          )
           .withTolerance(DriveConstants.HEADING_TOLERANCE)
           .withDriveRequestType(DriveRequestType.Velocity)
           .withSteerRequestType(SteerRequestType.MotionMagicExpo);
