@@ -6,7 +6,6 @@ package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import org.wpilib.math.filter.SlewRateLimiter;
 import org.wpilib.math.geometry.Pose2d;
@@ -160,7 +159,7 @@ private Trigger m_intakes =
 
   // Named Commands for Autonomous
   private void registerNamedCommands() {
-    /* 
+ 
     NamedCommands.registerCommand(
         "Ramp Up Shooter", Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2));
     NamedCommands.registerCommand(
@@ -186,7 +185,7 @@ private Trigger m_intakes =
                             m_shooter.getYawRotationalRate()
                                 * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
             .withTimeout(2));
-        */
+
   }
 
   private void setDefaultCommands() {
