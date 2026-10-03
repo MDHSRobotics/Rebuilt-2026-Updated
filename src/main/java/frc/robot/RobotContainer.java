@@ -486,8 +486,6 @@ public void updateDashboardOutputs() {
     Telemetry.log("Hub Active", HubStatus.isHubActive());
     Telemetry.log("Locked on to Hub", m_isLocked);
     Telemetry.log("Time to Next Shift", HubStatus.timeToNextShift());
-    Telemetry.log(
-        "CanivoreStatus", TunerConstants.kCANBus.getStatus().Status.toString());
     // energyMonitor.update();
 }
 

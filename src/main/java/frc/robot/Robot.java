@@ -31,6 +31,7 @@ import org.wpilib.command2.CommandScheduler;
 import frc.robot.Constants.VisionConstants;
 //SYSTEMCORE import frc.robot.util.Elastic;
 import com.limelightvision.Limelight;
+import com.revrobotics.util.StatusLogger;
 import com.limelightvision.IMUMode;
 import frc.robot.util.logging.LoggableSparkFlex;
 //SYSTEMCORE import org.littletonrobotics.urcl.URCL;
@@ -72,9 +73,10 @@ public class Robot extends TimedRobot {
     m_frontLimelight.setThrottle(200);
     // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
 
-    SignalLogger.setPath("/media/sda1/logs/");
+    StatusLogger.disableAutoLogging();
+    SignalLogger.setPath("/u/ctre-logs/");
     SignalLogger.start();
-    DataLogManager.start();
+    DataLogManager.start("/u");
     DriverStation.startDataLog(DataLogManager.getLog(), true);
     //URCL.start();
     //FollowPathCommand.warmupCommand().schedule();
