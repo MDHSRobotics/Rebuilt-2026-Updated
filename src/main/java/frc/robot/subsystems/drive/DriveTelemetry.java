@@ -34,7 +34,9 @@ public class DriveTelemetry {
    */
   public DriveTelemetry(double maxSpeed) {
     MaxSpeed = maxSpeed;
-    SignalLogger.start();
+
+    // SignalLogger is initialized and started in Robot()
+    //SignalLogger.start();
 
     /* Set up the module state Mechanism2d telemetry */
     for (int i = 0; i < 4; ++i) {

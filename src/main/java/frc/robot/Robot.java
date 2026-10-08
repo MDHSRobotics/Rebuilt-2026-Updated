@@ -6,6 +6,10 @@ package frc.robot;
 
 import static org.wpilib.units.Units.Meters;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 
@@ -83,11 +87,35 @@ public class Robot extends TimedRobot {
     m_frontLimelight.setThrottle(200);
     // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
 
+    //  LOGGING SETUP
     StatusLogger.disableAutoLogging();
-    SignalLogger.setPath("/u/ctre-logs/");
-    SignalLogger.start();
-    DataLogManager.start("/u");
+
+    if (RobotBase.isSimulation()) { 
+        // Simulation: logs under the project directory
+        try {
+            Files.createDirectories(Path.of("logs/ctre"));
+            Files.createDirectories(Path.of("logs/wpilib"));
+        } catch (IOException e) {
+            e.printStackTrace();
+  }
+        SignalLogger.setPath("logs/ctre/");
+        SignalLogger.start();
+
+        DataLogManager.start("logs/wpilib/");
+    } else {
+        // SystemCore: logs on USB drive
+        SignalLogger.setPath("/u/ctre-logs/");
+        SignalLogger.start();
+
+        DataLogManager.start("/u");
+    }
+
+    // Capture Driver Station data
     DriverStation.startDataLog(DataLogManager.getLog(), true);
+
+    // Capture console output
+    DataLogManager.logConsoleOutput(true);
+
     //URCL.start();
     //FollowPathCommand.warmupCommand().schedule();
     m_hasAppliedRobotRotation = false;
