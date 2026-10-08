@@ -116,6 +116,10 @@ private Trigger m_lockWheels =
     m_drivetrain.registerTelemetry(m_logger::telemeterize);
   }
 
+  public CommandSwerveDrivetrain getDrivetrain() {
+    return m_drivetrain;
+  } 
+
   /* Define the possible auto command options that can be chosen from the dashboard.
    * This includes:
    *  - Pre-defined auto commands from PathPlanner

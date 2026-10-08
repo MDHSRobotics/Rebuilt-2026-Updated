@@ -16,6 +16,7 @@ import org.wpilib.net.WebServer;
 import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.networktables.NetworkTablesJNI;
+import org.wpilib.simulation.DriverStationSim;
 import org.wpilib.system.DataLogManager;
 import org.wpilib.driverstation.MatchState;
 //import org.wpilib.driverstation.RobotState;
@@ -24,7 +25,9 @@ import org.wpilib.driverstation.DriverStation;
 //import org.wpilib.driverstation.MatchType;
 //import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.system.Filesystem;
+import org.wpilib.framework.RobotBase;
 import org.wpilib.framework.TimedRobot;
+import org.wpilib.hardware.hal.AllianceStationID;
 import org.wpilib.system.Tracer;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.CommandScheduler;
@@ -53,9 +56,16 @@ public class Robot extends TimedRobot {
 
   public Robot() {
 
+    if (RobotBase.isSimulation()) {
+        DriverStationSim.setAllianceStationId(Constants.SIMULATION_ALLIANCE_STATION_ID);
+        DriverStationSim.notifyNewData();
+    }
+
     m_matchTimePub = NetworkTableInstance.getDefault().getDoubleTopic("Match Time").publish();
 
     m_frontLimelight = new Limelight(VisionConstants.FRONT_LIMELIGHT_NAME);
+    // Use shared robot orientation for MegaTag2
+    m_frontLimelight.setUseSharedOrientation(true);
 
     // Configure Limelight Positions
     m_frontLimelight.setCameraPose_RobotSpaceOverride(
@@ -107,6 +117,15 @@ public class Robot extends TimedRobot {
     m_robotContainer.updateDashboardOutputs();
     m_tracer.addEpoch("Smart Dashboard");
     m_tracer.printEpochs();
+
+    // Feed the robot orientation into the MegaTag2 system for vision processing
+    Limelight.setSharedRobotOrientation(
+        m_robotContainer
+            .getDrivetrain()
+            .getState()
+            .Pose
+            .getRotation()
+            .getDegrees());
   }
 
   @Override

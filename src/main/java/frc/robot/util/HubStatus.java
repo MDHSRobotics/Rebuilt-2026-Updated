@@ -13,8 +13,13 @@ public class HubStatus {
 
   /** This method is used to determine if the Hub is active including a pre and post time */
   public static boolean isHubActive(double pre, double post) {
-    Optional<Alliance> alliance = MatchState.getAlliance();
+
+    Optional<String> gameData = MatchState.getGameData();
+    if (gameData.isEmpty()) {
+      return true;
+    }
     
+    Optional<Alliance> alliance = MatchState.getAlliance();
     if (alliance.isEmpty()) {
       return false;
     }
@@ -26,14 +31,10 @@ public class HubStatus {
     }
 
     double matchTime = MatchState.getMatchTime();
-    String gameData = MatchState.getGameData().get();
-
-    if (gameData.isEmpty()) {
-      return true;
-    }
 
     boolean redInactiveFirst = false;
-    switch (gameData.charAt(0)) {
+    String gameDataStr = gameData.get();
+    switch (gameDataStr.charAt(0)) {
       case 'R' -> redInactiveFirst = true;
       case 'B' -> redInactiveFirst = false;
       default -> {

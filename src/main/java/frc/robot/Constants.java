@@ -11,6 +11,7 @@ import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation3d;
 import org.wpilib.math.numbers.N3;
 import org.wpilib.hardware.bus.CANPort;
+import org.wpilib.hardware.hal.AllianceStationID;
 
 public final class Constants {
   private Constants() {}
@@ -19,6 +20,9 @@ public final class Constants {
   public static final double UPDATE_PERIOD = 0.02;
 
   public static final boolean TUNING_MODE = false;
+
+  // Default alliance station ID for simulation only
+  public static final AllianceStationID SIMULATION_ALLIANCE_STATION_ID = AllianceStationID.BLUE_2;
 
   public static class ControllerConstants {
     private ControllerConstants() {}
@@ -42,7 +46,7 @@ public final class Constants {
   public static class VisionConstants {
     private VisionConstants() {}
 
-    public static final String FRONT_LIMELIGHT_NAME = "limelight";
+    public static final String FRONT_LIMELIGHT_NAME = "limelight-front";
 
     /** Distance from the center of the robot to the front limelight lens in Inches */
     public static final double FRONT_LIMELIGHT_FORWARD_DISTANCE = Inches.of(22.416).in(Meters);
