@@ -99,10 +99,11 @@ private final CommandGamepad m_operatorController =
 
 private Trigger m_autoAlignCanceled =
     new Trigger(() -> Math.abs(m_driverController.getRightX()) > 0.1);
-private Trigger m_slowMode =
+private Trigger m_shoot =
     new Trigger(() -> m_driverController.getR2() > 0.5);
-private Trigger m_lockWheels =
+private Trigger m_intakes =
     new Trigger(() -> m_driverController.getL2() > 0.5);
+
 
   // Power Distribution Hub
   // public EnergyMonitor energyMonitor = new EnergyMonitor();
@@ -243,11 +244,11 @@ private Trigger m_lockWheels =
     //             org.wpilib.command2.sysid.SysIdRoutine.Direction.kReverse));
 
     // Half Speed
-    m_slowMode.onTrue(Commands.runOnce(() -> m_robotSpeed = 0.5));
+    m_driverController.R1().onTrue(Commands.runOnce(() -> m_robotSpeed = 0.5));
 
-    m_slowMode.onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
+    m_driverController.R1().onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
 
-    m_lockWheels.whileTrue(
+    m_driverController.cross().whileTrue(
         m_drivetrain
             .applyRequest(() -> m_brake)
             .andThen(Commands.runOnce(() -> System.out.println("Locking Wheels"))));
@@ -266,17 +267,14 @@ private Trigger m_lockWheels =
                     Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
 
     // Shoot Ball
-    m_driverController
-        .R1()
-        .whileTrue(
+    m_shoot.whileTrue(
             new SequentialCommandGroup(
                 Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2),
                 new ParallelCommandGroup(
                     Commands.run(() -> m_shooter.shootBall(), m_shooter),
                     Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
     // Set rumble on the driver conroller when the robot is shooting the balls
-    m_driverController
-        .R1()
+    m_shoot
         .and(new Trigger(() -> !HubStatus.isHubActive(3, 3)))
         .whileTrue(
             Commands.runEnd(
@@ -293,6 +291,27 @@ private Trigger m_lockWheels =
                         GenericHID.RumbleType.RIGHT_RUMBLE, 0.0);
                 }));
 
+    // Spin Intake
+    m_intakes
+        .whileTrue(
+            new ParallelCommandGroup(
+                Commands.run(
+                    () -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER),
+                    m_intake),
+                Commands.run(
+                    () -> m_hopper.runHopper(HopperPowers.INTAKE),
+                    m_hopper)));
+
+    // Spin Intake Reverse
+    m_driverController.L1()
+        .whileTrue(
+            new ParallelCommandGroup(
+                Commands.run(
+                    () -> m_intake.runSpinner(-0.9),
+                    m_intake),
+                Commands.run(
+                    () -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE),
+                    m_hopper)));
 
 
     // Lock on to hub
@@ -362,29 +381,6 @@ private Trigger m_lockWheels =
                     m_shooter),
                 Commands.run(
                     () -> m_hopper.runHopper(HopperPowers.SHOOT),
-                    m_hopper)));
-    // Spin Intake
-    m_operatorController
-        .rightBumper()
-        .whileTrue(
-            new ParallelCommandGroup(
-                Commands.run(
-                    () -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER),
-                    m_intake),
-                Commands.run(
-                    () -> m_hopper.runHopper(HopperPowers.INTAKE),
-                    m_hopper)));
-
-    // Spin Intake Reverse
-    m_operatorController
-        .leftBumper()
-        .whileTrue(
-            new ParallelCommandGroup(
-                Commands.run(
-                    () -> m_intake.runSpinner(-0.9),
-                    m_intake),
-                Commands.run(
-                    () -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE),
                     m_hopper)));
 
     m_operatorController
