@@ -144,7 +144,7 @@ public class Robot extends TimedRobot {
     m_tracer.addEpoch("Spark Flex Logging");
     m_robotContainer.updateDashboardOutputs();
     m_tracer.addEpoch("Smart Dashboard");
-    //m_tracer.printEpochs();
+    m_tracer.printEpochs();
 
     // Feed the robot orientation into the MegaTag2 system for vision processing
     Limelight.setSharedRobotOrientation(
