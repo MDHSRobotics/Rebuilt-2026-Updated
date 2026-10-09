@@ -6,6 +6,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import org.wpilib.math.filter.SlewRateLimiter;
 import org.wpilib.math.geometry.Pose2d;
@@ -72,10 +73,6 @@ public class RobotContainer {
       new AimingCommand(
           m_drivetrain, () -> getVelocityX(), () -> getVelocityY(), () -> getDeadband());
 
-  // Autonomous Chooser - A set of options for specifying the active autonomous command from a
-  // dashboard like Elastic
-  private Selectable<Command> m_staticAutoChooser;
-
   /* Autonomous Creator - This dynamically creates commands based on settings in the Elastic Auto tab */
   private final DynamicAutoCreator m_dynamicAutoCreator =
       new DynamicAutoCreator(this::resetFieldPosition, m_shooter, m_hopper, m_drivetrain);
@@ -128,24 +125,6 @@ private Trigger m_intakes =
    *    (such as starting position, paths, and actions)
    */
     private void setupAutoCommandOptions() {
-
-     // PathPlanner's buildAutoChooser() returns the old SendableChooser type,
-     // so build the chooser ourselves instead.
-     m_staticAutoChooser = new Selectable<>();
-     m_staticAutoChooser.addDefault("None", Commands.none());
-
-        // Explicitly add any other auto commands
-     m_staticAutoChooser.add("------------------------", Commands.none());
-     m_staticAutoChooser.add("Print Test", new RunCommand(() -> System.out.println("Test")));
-     m_staticAutoChooser.add(
-        "Shooting only", m_dynamicAutoCreator.createShootingAutoSequence());
-     m_staticAutoChooser.add(
-        "Middle Shooting", m_dynamicAutoCreator.createMiddleShootingAutoSequence());
-     m_staticAutoChooser.add(
-        "Middle Shooting and to ramp", m_dynamicAutoCreator.createMiddleShootingRampAutoSequence());
-
-     // Publish the auto command chooser to the dashboard
-     Tunables.publish("Static auto commands", m_staticAutoChooser);
 
       // Publish any dynamic auto parameters to the dashboard
       m_dynamicAutoCreator.publishParameters();
@@ -412,15 +391,12 @@ private Trigger m_intakes =
   }
 
   public Command getAutonomousCommand() {
-    // First see if a dynamic auto command has been defined
+
     Command auto_command = m_dynamicAutoCreator.getCommand();
     if (auto_command == null) {
-
-      // If not, get the static auto command selected in the AutoChooser drop-down in the dashboard
-      auto_command = m_staticAutoChooser.getSelected();
-    }
-    if (auto_command == null) {
       System.out.println("Autonomous Command is null");
+    } else {
+        System.out.println("Autonomous Command is set to " + m_dynamicAutoCreator.getCommandName());
     }
     return auto_command;
   }
