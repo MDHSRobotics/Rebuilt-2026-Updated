@@ -13,7 +13,7 @@ import java.nio.file.Path;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 
-//import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.commands.FollowPathCommand;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.net.WebServer;
@@ -107,7 +107,7 @@ public class Robot extends TimedRobot {
         SignalLogger.setPath("/U/ctre-logs/");
         SignalLogger.start();
 
-        DataLogManager.start("/U");
+        DataLogManager.start("/U/WPI-logs/");
     }
 
     // Capture Driver Station data
@@ -117,7 +117,7 @@ public class Robot extends TimedRobot {
     DataLogManager.logConsoleOutput(true);
 
     //URCL.start();
-    //FollowPathCommand.warmupCommand().schedule();
+    CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     m_hasAppliedRobotRotation = false;
 
     // Create the webserver for accessing Elastic's saved layout across computers

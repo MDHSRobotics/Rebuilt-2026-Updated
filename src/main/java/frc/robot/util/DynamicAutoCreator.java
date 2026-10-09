@@ -2,9 +2,9 @@ package frc.robot.util;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-//SYSTEMCORE import com.pathplanner.lib.auto.AutoBuilder;
-//SYSTEMCORE import com.pathplanner.lib.path.PathPlannerPath;
-//SYSTEMCORE import com.pathplanner.lib.util.FlippingUtil;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.FlippingUtil;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.driverstation.MatchState;
@@ -20,6 +20,7 @@ import org.wpilib.tunable.Selectable;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import org.wpilib.command2.ParallelCommandGroup;
+import org.wpilib.command2.RunCommand;
 import org.wpilib.command2.SequentialCommandGroup;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.hopper.Hopper;
@@ -42,6 +43,11 @@ public class DynamicAutoCreator {
   private final Consumer<Pose2d> m_odometryResetter;
   private final AutoTimer m_autoTimer = new AutoTimer();
   private Command m_dynamicAutoSequence = null;
+
+  // Autonomous Chooser - A set of options for specifying the active autonomous command from a
+  // dashboard like Elastic
+  private Selectable<Command> m_staticAutoChooser = null;
+  private Selectable<Command> m_pathPlannerAutoChooser = null;
 
   // Subsystems
   private final Shooter m_shooter;
@@ -68,12 +74,39 @@ public class DynamicAutoCreator {
    */
   public void publishParameters() {
 
-    // Select whether to use a dynamic or static auto command
+
+     // Static commands are pre-defined
+     m_staticAutoChooser = new Selectable<>();
+     m_staticAutoChooser.addDefault("None", Commands.none());
+     m_staticAutoChooser.add("------------------------", Commands.none());
+     m_staticAutoChooser.add("Print Test", new RunCommand(() -> System.out.println("Test")));
+     m_staticAutoChooser.add("Shooting only", createShootingAutoSequence());
+     m_staticAutoChooser.add("Middle Shooting", createMiddleShootingAutoSequence());
+     m_staticAutoChooser.add("Middle Shooting and to ramp", createMiddleShootingRampAutoSequence());
+
+     // Publish the static auto command chooser to the dashboard
+     Tunables.publish("Static auto commands", m_staticAutoChooser);
+
+     // Pathplanner commands are interactively designed in the PathPlanner tool
+     m_pathPlannerAutoChooser = AutoBuilder.buildAutoChooser();
+     
+     // Publish the PathPlanner auto command chooser to the dashboard
+     Tunables.publish("PathPlanner auto commands", m_pathPlannerAutoChooser);
+
+
+
+
+
+
+
+    // Select whether to use a dynamic, Pathplanner, or static auto command
     m_autoType.add("Dynamic", "Dynamic");
+    m_autoType.add("PathPlanner", "PathPlanner");
     m_autoType.addDefault("Static", "Static");
     m_autoType.onChange(this::updateDynamicCommand);
     m_autoTunables.publish("Type of Auto Command", m_autoType);
 
+    // Options for Dynamic command:
     // Starting position option
     m_startingPositionChooser.addDefault("Top", "Top to ");
     m_startingPositionChooser.add("Middle", "Middle to ");
@@ -92,16 +125,16 @@ public class DynamicAutoCreator {
 
   private void updateDynamicCommand(String changedSetting) {
     String autoType = m_autoType.getSelected();
-    if (autoType.equals("Static")) {
-      // Static chosen so clear dynamic command
-      m_dynamicAutoSequence = null;
-    } else {
+    if (autoType.equals("Dynamic")) {
       // Create a dynamic command based on current settings of auto parameters
-      //SYSTEMCORE createOneShootingSequenceAuto();
+      createOneShootingSequenceAuto();
+    }
+    else {
+      // Static or Pathplanner chosen so clear dynamic command
+      m_dynamicAutoSequence = null;
     }
   }
 
-  /*SYSTEMCORE BEGIN
   private void createOneShootingSequenceAuto() {
     try {
       String pathName = m_startingPositionChooser.getSelected();
@@ -124,7 +157,7 @@ public class DynamicAutoCreator {
       return;
     }
   }
-  SYSTEMCORE END */
+
 
   public Command createShootingAutoSequence() {
     Command auto_command =
@@ -168,7 +201,6 @@ public class DynamicAutoCreator {
     return auto_command;
   }
 
-  /*SYSTEMCORE BEGIN
   public Command resetOdometryCommand(Pose2d startingPose) {
     return Commands.runOnce(
         () -> {
@@ -180,12 +212,49 @@ public class DynamicAutoCreator {
         });
   }
 
-  SYSTEMCORE END */
 
-  /* This method returns the dynamicly-generated auto command based on
-   * options set in the dashboard. If no settings have been selected, return null.
+  /* This method returns the auto command based on type set in dashboard
+   * (Dynamic, Static, Pathplanner)
+   * If no settings have been selected, return null.
    */
   public Command getCommand() {
-    return m_dynamicAutoSequence;
+    Command autoCommand = null;
+    String autoType = m_autoType.getSelected();
+    switch (autoType) {
+      case "Dynamic":
+        updateDynamicCommand("");
+        autoCommand = m_dynamicAutoSequence;
+        break;
+      case "Static":
+        autoCommand = m_staticAutoChooser.getSelected();
+        break;
+      case "PathPlanner":
+        autoCommand = m_pathPlannerAutoChooser.getSelected();
+        break;
+      default:
+        autoCommand = null;
+        break;
+    }
+    return autoCommand;
+  }
+
+  public String getCommandName() {
+    String autoCommandName;
+    String autoType = m_autoType.getSelected();
+    switch (autoType) {
+      case "Dynamic":
+        autoCommandName = "Dynamic";
+        break;
+      case "Static":
+        autoCommandName = m_staticAutoChooser.getSelected().getName();
+        break;
+      case "PathPlanner":
+        autoCommandName = m_pathPlannerAutoChooser.getSelected().getName();
+        break;
+      default:
+        autoCommandName = "Unknown";
+        break;
+    }
+    return autoCommandName;
   }
 }

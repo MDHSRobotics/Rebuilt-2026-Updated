@@ -202,6 +202,19 @@
               "period": 0.06,
               "sort_options": false
             }
+          },
+          {
+            "title": "PathPlanner auto commands",
+            "x": 0.0,
+            "y": 512.0,
+            "width": 384.0,
+            "height": 128.0,
+            "type": "Dropdown Chooser",
+            "properties": {
+              "topic": "/Tunables/PathPlanner auto commands",
+              "period": 0.06,
+              "sort_options": false
+            }
           }
         ]
       }

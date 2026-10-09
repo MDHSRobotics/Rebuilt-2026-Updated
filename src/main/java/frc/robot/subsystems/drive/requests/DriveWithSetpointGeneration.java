@@ -5,12 +5,12 @@ import static org.wpilib.units.Units.*;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveControlParameters;
 import com.ctre.phoenix6.swerve.SwerveModule;
-//SYSTEMCORE import com.pathplanner.lib.util.DriveFeedforwards;
-//SYSTEMCORE import com.pathplanner.lib.util.swerve.SwerveSetpoint;
-//SYSTEMCORE import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
+import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.swerve.SwerveSetpoint;
+import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
-//SYSTEMCORE import org.wpilib.math.kinematics.SwerveModuleState;
+import org.wpilib.math.kinematics.SwerveModuleVelocity;
 import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.networktables.StructPublisher;
@@ -41,18 +41,18 @@ public class DriveWithSetpointGeneration implements ResettableSwerveRequest {
 
   private final ApplyRobotVelocity m_applyRobotVelocity = new ApplyRobotVelocity();
 
-  //SYSTEMCORE private boolean m_resetRequested = false;
+private boolean m_resetRequested = false;
 
   // Swerve Setpoint Generator
-  //SYSTEMCORE private final SwerveSetpointGenerator m_setpointGenerator;
-  //SYSTEMCORE  private SwerveModuleState[] m_startingModuleStates;
-  //SYSTEMCORE private SwerveSetpoint m_previousSwerveSetpoint;
+private final SwerveSetpointGenerator m_setpointGenerator;
+private SwerveModuleVelocity[] m_startingModuleStates;
+private SwerveSetpoint m_previousSwerveSetpoint;
 
   /**
    * The update period for the {@link com.pathplanner.lib.util.swerve.SwerveSetpointGenerator Swerve
    * Setpoint Generator} in seconds.
    */
-  //SYSTEMCORE private final double m_updatePeriod;
+private final double m_updatePeriod;
 
   // NetworkTables logging
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
@@ -64,11 +64,11 @@ public class DriveWithSetpointGeneration implements ResettableSwerveRequest {
       m_table.getStructTopic("Applied Robot-relative Velocity", ChassisVelocities.struct).publish();
 
   /** Creates a new request without the Swerve Setpoint Generator. */
-  public DriveWithSetpointGeneration() {
-      //SYSTEMCORE m_setpointGenerator = null;
-      //SYSTEMCORE m_startingModuleStates = null;
-      //SYSTEMCORE m_updatePeriod = 0.0;
-  }
+public DriveWithSetpointGeneration() {
+    m_setpointGenerator = null;
+    m_startingModuleStates = null;
+    m_updatePeriod = 0.0;
+}
 
   /**
    * Creates a new request with the Swerve Setpoint Generator.
@@ -76,18 +76,19 @@ public class DriveWithSetpointGeneration implements ResettableSwerveRequest {
    * @param swerveSetpointGenerator The Swerve Setpoint Generator to use when driving.
    * @param updatePeriod The amount of time between robot updates in seconds.
    */
-  /* SYSTEMCORE BEGIN
+
   public DriveWithSetpointGeneration(
       SwerveSetpointGenerator swerveSetpointGenerator, double updatePeriod) {
     m_setpointGenerator = swerveSetpointGenerator;
-    m_startingModuleStates = new SwerveModuleState[4];
+    m_startingModuleStates = new SwerveModuleVelocity[4];
     m_updatePeriod = updatePeriod;
 
     // This should be set to false because Swerve Setpoint Generator desaturates wheel velocity for
     // you.
-    m_applyRobotVelocity.withDesaturateWheelVelocity(false);
+    m_applyRobotVelocity.withDesaturateWheelVelocities(false);
+    
   }
-  SYSTEMCORE END */
+
   /**
    * @see
    *     com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.FieldCentric#apply(com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.LegacySwerveControlRequestParameters,
@@ -102,18 +103,17 @@ public class DriveWithSetpointGeneration implements ResettableSwerveRequest {
             m_toApplyFieldVelocity.vy,
             m_toApplyFieldVelocity.omega);
 
-    /*SYSTEMCORE BEGIN
     // Resets are only required if the Swerve Setpoint Generator is in use.
     if (m_resetRequested && m_setpointGenerator != null) {
       for (int i = 0; i < 4; ++i) {
-        m_startingModuleStates[i] = modulesToApply[i].getCurrentState();
+        m_startingModuleStates[i] = modulesToApply[i].getCurrentVelocity();
       }
       m_previousSwerveSetpoint =
-          new SwerveSetpoint(
-              parameters.currentChassisSpeed, m_startingModuleStates, DriveFeedforwards.zeros(4));
+      new SwerveSetpoint(
+        parameters.currentChassisVelocity, m_startingModuleStates, DriveFeedforwards.zeros(4));
       m_resetRequested = false;
     }
-    SYSTEMCORE END */
+ 
 
     // If the user requested to drive according to the operator perspective, rotate the velocities by the angle
     if (m_drivingPerspective == ForwardPerspectiveValue.OperatorPerspective) {
@@ -146,7 +146,7 @@ public class DriveWithSetpointGeneration implements ResettableSwerveRequest {
     long timestampMicroseconds = DriveTelemetry.stateTimestampToNTTimestamp(parameters.timestamp);
     m_requestedVelocityPub.set(toApplyRobotVelocity, timestampMicroseconds);
 
-    /*SYSTEMCORE BEGIN
+
     // If the setpoint generator is configured, improve the profiled movement with a setpoint that
     // respects the robot's constraints better.
     if (m_setpointGenerator != null) {
@@ -154,7 +154,7 @@ public class DriveWithSetpointGeneration implements ResettableSwerveRequest {
           m_setpointGenerator.generateSetpoint(
               m_previousSwerveSetpoint, toApplyRobotVelocity, m_updatePeriod);
 
-      toApplyRobotVelocity = m_previousSwerveSetpoint.robotRelativeVelocity();
+      toApplyRobotVelocity = m_previousSwerveSetpoint.robotRelativeSpeeds();
 
       m_applyRobotVelocity
           .withWheelForceFeedforwardsX(
@@ -162,7 +162,7 @@ public class DriveWithSetpointGeneration implements ResettableSwerveRequest {
           .withWheelForceFeedforwardsY(
               m_previousSwerveSetpoint.feedforwards().robotRelativeForcesYNewtons());
     }
-    SYSTEMCORE END */
+  
 
     // More NetworkTables logging
     m_appliedVelocityPub.set(toApplyRobotVelocity);
@@ -172,7 +172,7 @@ public class DriveWithSetpointGeneration implements ResettableSwerveRequest {
 
   /** Tells the swerve request to reset next time it is used. */
   public void resetRequest() {
-    //SYSTEMCORE m_resetRequested = true;
+  m_resetRequested = true;
   }
 
   /**

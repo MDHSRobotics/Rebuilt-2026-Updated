@@ -9,8 +9,8 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-//SYSTEMCORE import com.pathplanner.lib.auto.AutoBuilder;
-//SYSTEMCORE import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import org.wpilib.math.linalg.Matrix;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
@@ -67,12 +67,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private boolean m_hasAppliedOperatorPerspective = false;
 
   /*Swerve request to apply during robot-centric path following */
-  /* SYSTEMCORE BEGIN
+
   private final SwerveRequest.ApplyRobotVelocity m_pathApplyRobotVelocity =
     new SwerveRequest.ApplyRobotVelocity()
         .withDriveRequestType(DriveRequestType.Velocity)
         .withSteerRequestType(SteerRequestType.Position);
-  SYSTEMCORE END*/
+
 
   /* Swerve requests to apply during SysId characterization */
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
@@ -269,17 +269,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   private void configureAutoBuilder() {
-    /*SYSTEMCORE BEGIN
     AutoBuilder.configure(
         () -> getState().Pose, // Supplier of current robot pose
         this::resetPose, // Consumer for seeding pose against auto
-        () -> getState().Speeds, // Supplier of current robot speeds
+        () -> getState().Velocity, // Supplier of current robot speeds
         // Consumer of ChassisVelocities and feedforwards to drive the robot
         (speeds, feedforwards) -> {
           ;
           setControl(
               m_pathApplyRobotVelocity
-                  .withSpeeds(speeds)
+                  .withVelocity(speeds)
                   .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                   .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons()));
         },
@@ -289,7 +288,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         () -> MatchState.getAlliance().orElse(Alliance.BLUE) == Alliance.RED,
         this // Subsystem for requirements
         );
-    SYSTEMCORE END*/
+
   }
 
   /**
@@ -469,79 +468,6 @@ public void periodic() {
               visionTimestampSeconds,
               VisionConstants.FRONT_STD_DEVS);
         });
-
-    // DoubleArraySubscriber backPoseEstimateSub =
-    //     m_inst
-    //         .getTable(VisionConstants.BACK_LIMELIGHT_NAME)
-    //         .getDoubleArrayTopic("botpose_orb_wpiblue")
-    //         .subscribe(null);
-
-    // m_inst.addListener(
-    //     backPoseEstimateSub,
-    //     EnumSet.of(NetworkTableEvent.Kind.kValueAll),
-    //     event -> {
-    //       NetworkTableValue value = event.valueData.value;
-    //       double[] poseArray = value.getDoubleArray();
-    //       // If there is no data available, don't use the data
-    //       if (poseArray.length < 11) {
-    //         m_backVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
-    //         m_backToTagDistancePub.set(FieldConstants.NO_TAG_DISTANCES);
-    //         return;
-    //       }
-
-    //       /* Get bot pose estimate */
-    //       Translation2d botPose = new Translation2d(poseArray[0], poseArray[1]);
-    //       // Whenever the robot doesn't see any tags, it will send a pose of (0,0,0), so don't
-    // use
-    //       // the data
-    //       if (botPose.equals(Translation2d.ZERO)) {
-    //         m_backVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
-    //         m_backToTagDistancePub.set(FieldConstants.NO_TAG_DISTANCES);
-    //         return;
-    //       }
-    //       Rotation2d botRotation = Rotation2d.fromDegrees(poseArray[5]);
-    //       Pose2d botPoseEstimate = new Pose2d(botPose, botRotation);
-
-    //       /* Get timestamp */
-    //       long timestampMicroseconds = value.getTime();
-
-    //       /* Log pose estimate to AdvantageScope */
-    //       m_backPoseEstimatePub.set(botPoseEstimate, timestampMicroseconds);
-
-    //       // Convert timestamp from microseconds to seconds and adjust for latency
-    //       double latency = poseArray[6];
-    //       double adjustedTimestamp = (timestampMicroseconds / 1000000.0) - (latency / 1000.0);
-
-    //       /* Log which apriltags are currently visible */
-    //       int tagCount = (int) poseArray[7];
-    //       int valsPerFiducial = 7;
-    //       int expectedTotalVals = 11 + valsPerFiducial * tagCount;
-
-    //       // If there is no more data available, stop logging
-    //       if (poseArray.length != expectedTotalVals || tagCount == 0) {
-    //         m_backVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
-    //         m_backToTagDistancePub.set(FieldConstants.NO_TAG_DISTANCES);
-    //         return;
-    //       }
-    //       Translation3d[] visibleTagPositions = new Translation3d[tagCount];
-    //       double[] distanceToTags = new double[tagCount];
-    //       for (int i = 0; i < tagCount; i++) {
-    //         int currentIndex = 11 + (i * valsPerFiducial);
-    //         int id = (int) poseArray[currentIndex];
-    //         double distance = poseArray[currentIndex + 4];
-    //         visibleTagPositions[i] =
-    //             FieldConstants.PLAYING_FIELD.getTagPose(id).orElseThrow().getTranslation();
-    //         distanceToTags[i] = distance;
-    //       }
-    //       m_backVisibleTagsPub.set(visibleTagPositions, timestampMicroseconds);
-    //       m_backToTagDistancePub.set(distanceToTags, timestampMicroseconds);
-
-    //       /*Add the vision measurement to the pose estimator */
-    //       this.addVisionMeasurement(
-    //           botPoseEstimate,
-    //           Utils.fpgaToCurrentTime(adjustedTimestamp),
-    //           VisionConstants.BACK_STD_DEVS);
-    //     });
   }
 
   /**
