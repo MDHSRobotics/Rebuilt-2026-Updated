@@ -62,7 +62,7 @@ public final class Constants {
     public static final double LIMELIGHT_MOUNT_ANGLE = 30;
 
     /** Units: Degrees */
-    public static final double FRONT_LIMELIGHT_PITCH = 30;
+    public static final double FRONT_LIMELIGHT_PITCH = 25;
 
     // These needs to be tested and adjusted later on
     public static final double FRONT_X_STD_DEV = 0.04;

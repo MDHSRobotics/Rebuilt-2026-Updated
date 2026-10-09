@@ -104,10 +104,10 @@ public class Robot extends TimedRobot {
         DataLogManager.start("logs/wpilib/");
     } else {
         // SystemCore: logs on USB drive
-        SignalLogger.setPath("/u/ctre-logs/");
+        SignalLogger.setPath("/U/ctre-logs/");
         SignalLogger.start();
 
-        DataLogManager.start("/u");
+        DataLogManager.start("/U/WPI-logs/");
     }
 
     // Capture Driver Station data
