@@ -269,7 +269,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   private void configureAutoBuilder() {
-   /*PATHPLANNER 
     AutoBuilder.configure(
         () -> getState().Pose, // Supplier of current robot pose
         this::resetPose, // Consumer for seeding pose against auto
@@ -289,7 +288,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         () -> MatchState.getAlliance().orElse(Alliance.BLUE) == Alliance.RED,
         this // Subsystem for requirements
         );
-*/
 
   }
 
