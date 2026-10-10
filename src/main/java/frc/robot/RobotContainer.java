@@ -199,34 +199,14 @@ private Trigger m_intakes =
    * ">this controller map</a> to update and view the current controls.
    */
   private void configureDriverControllers() {
-    // Run SysId routines when holding back/start and X/Y.
-    // Note that each routine should be run exactly once in a single log.
-    // m_driverController
-    //     .povUp()
-    //     .whileTrue(
-    //         m_drivetrain.sysIdDynamic(
-    //             org.wpilib.command2.sysid.SysIdRoutine.Direction.kForward));
-    // m_driverController
-    //     .povDown()
-    //     .whileTrue(
-    //         m_drivetrain.sysIdDynamic(
-    //             org.wpilib.command2.sysid.SysIdRoutine.Direction.kReverse));
-    // m_driverController
-    //     .povRight()
-    //     .whileTrue(
-    //         m_drivetrain.sysIdQuasistatic(
-    //             org.wpilib.command2.sysid.SysIdRoutine.Direction.kForward));
-    // m_driverController
-    //     .povLeft()
-    //     .whileTrue(
-    //         m_drivetrain.sysIdQuasistatic(
-    //             org.wpilib.command2.sysid.SysIdRoutine.Direction.kReverse));
 
-    // Half Speed
+    // Half Speed: Right Bumper On
     m_driverController.R1().onTrue(Commands.runOnce(() -> m_robotSpeed = 0.5));
 
+    // Full Speed: Right Bumper Off
     m_driverController.R1().onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
 
+    // Lock Wheels: Cross
     m_driverController.cross().whileTrue(
         m_drivetrain
             .applyRequest(() -> m_brake)
@@ -235,6 +215,7 @@ private Trigger m_intakes =
     // Reset the field-centric heading on option press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
 
+    // Shoot With Set Speed: Circle
     m_driverController
         .circle()
         .whileTrue(
@@ -245,13 +226,14 @@ private Trigger m_intakes =
                     Commands.run(() -> m_shooter.shootBall(ShooterConstants.RPMS[2]), m_shooter),
                     Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
 
-    // Shoot Ball
+    // Shoot Ball: Triangle
     m_shoot.whileTrue(
             new SequentialCommandGroup(
                 Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2),
                 new ParallelCommandGroup(
                     Commands.run(() -> m_shooter.shootBall(), m_shooter),
                     Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
+    
     // Set rumble on the driver conroller when the robot is shooting the balls
     m_shoot
         .and(new Trigger(() -> !HubStatus.isHubActive(3, 3)))
@@ -270,7 +252,7 @@ private Trigger m_intakes =
                         GenericHID.RumbleType.RIGHT_RUMBLE, 0.0);
                 }));
 
-    // Spin Intake
+    // Spin Intake: Left Trigger
     m_intakes
         .whileTrue(
             new ParallelCommandGroup(
@@ -281,7 +263,7 @@ private Trigger m_intakes =
                     () -> m_hopper.runHopper(HopperPowers.INTAKE),
                     m_hopper)));
 
-    // Spin Intake Reverse
+    // Spin Intake Reverse: Left Bumper
     m_driverController.L1()
         .whileTrue(
             new ParallelCommandGroup(
@@ -293,7 +275,7 @@ private Trigger m_intakes =
                     m_hopper)));
 
 
-    // Lock on to hub
+    // Lock on to hub: Triangle
     m_driverController
         .triangle()
         .toggleOnTrue(
@@ -310,7 +292,7 @@ private Trigger m_intakes =
     m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
     m_autoAlignCanceled.onTrue(Commands.runOnce(() -> m_isLocked = false));
 
-    // Face the Hub
+    // Face the Hub Using Swerve Request: Square
     m_driverController.square().whileTrue(m_AimingCommand.alignWithHub());
   }
 
@@ -386,6 +368,31 @@ private Trigger m_intakes =
             new InstantCommand(
                 () -> m_shooter.changeTrim(-100)));
 
+  }
+
+  private void configureSysIdControls() {
+    //Run SysId routines when holding back/start and X/Y.
+    //Note that each routine should be run exactly once in a single log.
+    m_driverController
+        .dpadUp()
+        .whileTrue(
+            m_drivetrain.sysIdDynamic(
+                org.wpilib.command2.sysid.SysIdRoutine.Direction.FORWARD));
+    m_driverController
+        .dpadDown()
+        .whileTrue(
+            m_drivetrain.sysIdDynamic(
+                org.wpilib.command2.sysid.SysIdRoutine.Direction.REVERSE));
+    m_driverController
+        .dpadRight()
+        .whileTrue(
+            m_drivetrain.sysIdQuasistatic(
+                org.wpilib.command2.sysid.SysIdRoutine.Direction.FORWARD));
+    m_driverController
+        .dpadLeft()
+        .whileTrue(
+            m_drivetrain.sysIdQuasistatic(
+                org.wpilib.command2.sysid.SysIdRoutine.Direction.REVERSE));
   }
 
   public Command getAutonomousCommand() {
