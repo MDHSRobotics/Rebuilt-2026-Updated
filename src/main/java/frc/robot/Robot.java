@@ -39,6 +39,8 @@ import frc.robot.Constants.VisionConstants;
 import com.limelightvision.Limelight;
 import com.revrobotics.util.StatusLogger;
 import com.limelightvision.IMUMode;
+
+import frc.robot.util.logging.EpochLogger;
 import frc.robot.util.logging.LoggableSparkFlex;
 //SYSTEMCORE import org.littletonrobotics.urcl.URCL;
 
@@ -52,6 +54,7 @@ public class Robot extends TimedRobot {
   private Limelight m_frontLimelight;
 
   private final Tracer m_tracer = new Tracer();
+  private final EpochLogger epochLogger = new EpochLogger(m_tracer);
 
   /* log and replay timestamp and joystick data */
   // private final HootAutoReplay m_timeAndJoystickReplay =
@@ -129,6 +132,8 @@ public class Robot extends TimedRobot {
     System.out.println("CTRE time = " + Utils.getCurrentTimeSeconds());
 
     m_robotContainer = new RobotContainer();
+
+    epochLogger.start();
   }
 
   @Override
@@ -143,8 +148,8 @@ public class Robot extends TimedRobot {
     m_tracer.addEpoch("Spark Flex Logging");
     m_robotContainer.updateDashboardOutputs();
     m_tracer.addEpoch("Smart Dashboard");
-    m_tracer.printEpochs();
-
+    epochLogger.update();
+    
     // Feed the robot orientation into the MegaTag2 system for vision processing
     Limelight.setSharedRobotOrientation(
         m_robotContainer
