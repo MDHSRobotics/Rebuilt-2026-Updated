@@ -29,7 +29,7 @@ public class EpochLogger {
                 DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
             );
 
-            Path logPath = Path.of("/U/epochs_" + timestamp + ".txt");
+            Path logPath = Path.of("/U/epoch-logs/epochs_" + timestamp + ".txt");
 
             writer = Files.newBufferedWriter(logPath, StandardCharsets.UTF_8);
 
@@ -48,6 +48,14 @@ public class EpochLogger {
 
         tracer.printEpochs(line -> {
             try {
+                if (line.startsWith("\tSmart ")) {
+                    String timestamp = LocalDateTime.now().format(
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
+                    );
+
+                    writer.write("=== " + timestamp + "===");
+                    writer.newLine();
+                }
                 writer.write(line);
                 writer.newLine();
             } catch (IOException e) {
