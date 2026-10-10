@@ -264,7 +264,7 @@ private Trigger m_intakes =
         .whileTrue(
             new ParallelCommandGroup(
                 Commands.run(
-                    () -> m_intake.runSpinner(-0.9),
+                    () -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER_REVERSE),
                     m_intake),
                 Commands.run(
                     () -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE),
