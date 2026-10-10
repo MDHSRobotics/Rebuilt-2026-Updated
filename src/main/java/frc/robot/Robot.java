@@ -31,7 +31,6 @@ import org.wpilib.driverstation.DriverStation;
 import org.wpilib.system.Filesystem;
 import org.wpilib.framework.RobotBase;
 import org.wpilib.framework.TimedRobot;
-import org.wpilib.hardware.hal.AllianceStationID;
 import org.wpilib.system.Tracer;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.CommandScheduler;
