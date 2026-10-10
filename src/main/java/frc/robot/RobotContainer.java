@@ -24,6 +24,7 @@ import org.wpilib.command2.SequentialCommandGroup;
 import org.wpilib.command2.WaitCommand;
 import org.wpilib.command2.button.CommandDualShock4Controller;
 import org.wpilib.command2.button.CommandGamepad;
+import org.wpilib.command2.button.CommandXboxController;
 import org.wpilib.driverstation.POVDirection;
 import org.wpilib.command2.button.RobotModeTriggers;
 import org.wpilib.command2.button.Trigger;
@@ -82,8 +83,8 @@ public class RobotContainer {
   /* Controllers  */
 private final CommandDualShock4Controller m_driverController =
     new CommandDualShock4Controller(ControllerConstants.DRIVER_CONTROLLER_PORT);
-private final CommandGamepad m_operatorController =
-    new CommandGamepad(ControllerConstants.OPERATOR_CONTROLLER_PORT);
+private final CommandXboxController m_operatorController =
+    new CommandXboxController(ControllerConstants.OPERATOR_CONTROLLER_PORT);
 
 
   // Limiters for smoother controller input
@@ -323,11 +324,10 @@ private Trigger m_intakes =
     /* Intake Commands */
 
    m_operatorController
-    .getHID()
-    .pov(POVDirection.DOWN)
+    .dpadDown()
     .onTrue(
         Commands.run(
-            () -> m_intake.runMotors(0.5, 0.5),
+            () -> m_intake.runMotors(1, 1),
             m_intake)
             .withTimeout(1.5));
     // Deploy and Stow Intake
@@ -349,9 +349,7 @@ private Trigger m_intakes =
     // m_operatorController.leftBumper().onTrue(Commands.run(() -> m_intake.runMotors(0.8),
     // m_intake));
     // m_operatorController.b().onTrue(Commands.run(() -> m_intake.runMotors(0.8), m_intake));
-
-    m_operatorController
-        .faceUp()
+    m_operatorController.dpadUp()
         .whileTrue(
             new ParallelCommandGroup(
                 Commands.run(
