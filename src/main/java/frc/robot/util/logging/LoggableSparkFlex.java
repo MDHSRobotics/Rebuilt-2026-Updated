@@ -7,7 +7,6 @@ import com.revrobotics.spark.SparkFlex;
 import org.wpilib.hardware.bus.CANPort;
 import org.wpilib.networktables.BooleanPublisher;
 import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.telemetry.Telemetry;
 import org.wpilib.telemetry.TelemetryTable;
 
 import java.util.ArrayList;
@@ -85,8 +84,6 @@ public class LoggableSparkFlex extends SparkFlex {
   private double targetVelocity = 0;
   private double targetPosition = 0;
 
-  private double id = 0;
-
   //Telemetry migration guide: https://github.com/wpilibsuite/allwpilib/blob/main/telemetry/doc/telemetry.md#migration-from-wpilib-2026
 
   // ── Constructor ───────────────────────────────────────────────────────────
@@ -109,8 +106,6 @@ public class LoggableSparkFlex extends SparkFlex {
       EncoderType encoderType,
       LoggedValue... valuesToLog) {
     super(bus, canId, motorType);
-
-    id = canId;
 
     if (encoderType == EncoderType.ABSOLUTE) {
       absoluteEncoder = getAbsoluteEncoder();
@@ -188,17 +183,16 @@ public class LoggableSparkFlex extends SparkFlex {
   // ── Internal ──────────────────────────────────────────────────────────────
 
   private void update() {
-    Telemetry.log("Motor Speed: " + id, relativeEncoder.getVelocity().get());
 
     double currentVelocity =
         absoluteEncoder != null
-            ? absoluteEncoder.getVelocity().get(0.0)
-            : relativeEncoder.getVelocity().get(0.0);
+            ? absoluteEncoder.getVelocity().get()
+            : relativeEncoder.getVelocity().get();
 
     double currentPosition =
         absoluteEncoder != null
-            ? absoluteEncoder.getPosition().get(0.0)
-            : relativeEncoder.getPosition().get(0.0);
+            ? absoluteEncoder.getPosition().get()
+            : relativeEncoder.getPosition().get();
 
     if (logs(LoggedValue.VELOCITY)) {
       m_table.log("Current Velocity", currentVelocity);
