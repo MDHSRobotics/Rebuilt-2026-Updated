@@ -36,6 +36,7 @@ import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.system.Notifier;
 import org.wpilib.system.RobotController;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Subsystem;
 import org.wpilib.command2.sysid.SysIdRoutine;
@@ -356,6 +357,8 @@ public void periodic() {
                 m_hasAppliedOperatorPerspective = true;
               });
     }
+
+    Telemetry.log("DrivetrainPose", getState().Pose);
   }
 
   private void startSimThread() {

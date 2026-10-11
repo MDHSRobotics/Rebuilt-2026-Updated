@@ -9,6 +9,8 @@ import org.wpilib.networktables.BooleanPublisher;
 import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.telemetry.Telemetry;
+
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -88,6 +90,8 @@ public class LoggableSparkFlex extends SparkFlex {
   private double targetVelocity = 0;
   private double targetPosition = 0;
 
+  private double id = 0;
+
   // ── Constructor ───────────────────────────────────────────────────────────
 
   /**
@@ -108,6 +112,8 @@ public class LoggableSparkFlex extends SparkFlex {
       EncoderType encoderType,
       LoggedValue... valuesToLog) {
     super(bus, canId, motorType);
+
+    id = canId;
 
     if (encoderType == EncoderType.ABSOLUTE) {
       absoluteEncoder = getAbsoluteEncoder();
@@ -203,6 +209,7 @@ public class LoggableSparkFlex extends SparkFlex {
   // ── Internal ──────────────────────────────────────────────────────────────
 
   private void update() {
+    Telemetry.log("Motor Speed: " + id, relativeEncoder.getVelocity().get());
 
     double currentVelocity =
         absoluteEncoder != null
