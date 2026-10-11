@@ -9,10 +9,9 @@ import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
-import org.wpilib.networktables.DoublePublisher;
-import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.telemetry.Telemetry;
+import org.wpilib.telemetry.TelemetryTable;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import org.wpilib.command2.SubsystemBase;
@@ -32,8 +31,7 @@ import frc.robot.util.logging.LoggedTunableNumber;
 
 public class Shooter extends SubsystemBase implements Testable {
 
-  private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
-  private final NetworkTable m_table = m_inst.getTable("Shooter");
+  private final TelemetryTable m_shooterTelemetry = Telemetry.getTable("Shooter");
 
   private final Limelight m_frontLimelight = new Limelight(Constants.VisionConstants.FRONT_LIMELIGHT_NAME);
 
@@ -43,7 +41,7 @@ public class Shooter extends SubsystemBase implements Testable {
           BusConstants.SHOOTER_BUS,
           ShooterConstants.SHOOTER_LEFT_MOTOR_ID,
           MotorType.kBrushless,
-          m_table,
+          m_shooterTelemetry,
           "Left Shooter",
           EncoderType.RELATIVE,
           LoggedValue.VELOCITY,
@@ -54,7 +52,7 @@ public class Shooter extends SubsystemBase implements Testable {
           BusConstants.SHOOTER_BUS,
           ShooterConstants.SHOOTER_RIGHT_MOTOR_ID,
           MotorType.kBrushless,
-          m_table,
+          m_shooterTelemetry,
           "Right Shooter",
           EncoderType.RELATIVE);
   private final LoggableSparkFlex m_kickerMotor =
@@ -62,16 +60,10 @@ public class Shooter extends SubsystemBase implements Testable {
           BusConstants.SHOOTER_BUS,
           ShooterConstants.KICKER_MOTOR_ID,
           MotorType.kBrushless,
-          m_table,
+          m_shooterTelemetry,
           "Kicker",
           EncoderType.RELATIVE,
           LoggedValue.VELOCITY);
-
-  /* Networktables Publishers */
-  private final DoublePublisher m_distanceRobotToTagPub =
-      m_table.getDoubleTopic("Distance From Robot to AprilTag ").publish();
-  private final DoublePublisher m_txAdjustmentPub =
-      m_table.getDoubleTopic("TX Adjustment").publish();
 
   private final LoggedTunableNumber kP =
       new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_P_SHOOTER);
@@ -151,7 +143,7 @@ public class Shooter extends SubsystemBase implements Testable {
       m_currentDistance = m_lastDistance;
     }
 
-    m_distanceRobotToTagPub.set(m_currentDistance);
+    m_shooterTelemetry.log("Distance From Robot to AprilTag", m_currentDistance);
     Telemetry.log("AprilTag is recognized", m_tagIsSeen);
   }
 
@@ -194,7 +186,7 @@ public class Shooter extends SubsystemBase implements Testable {
 
   public double getYawRotationalRate() {
     double txAdjusment = Aiming.getYawTxAdjustment(m_frontLimelight.getTXDegrees());
-    m_txAdjustmentPub.set(txAdjusment);
+    m_shooterTelemetry.log("TX Adjustment", txAdjusment);
     return txAdjusment;
   }
 

@@ -6,10 +6,9 @@ import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import org.wpilib.hardware.bus.CANPort;
 import org.wpilib.networktables.BooleanPublisher;
-import org.wpilib.networktables.DoublePublisher;
-import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.telemetry.Telemetry;
+import org.wpilib.telemetry.TelemetryTable;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -76,12 +75,8 @@ public class LoggableSparkFlex extends SparkFlex {
   private final SparkClosedLoopController controller;
   private final Set<LoggedValue> loggedValues;
 
-  // Publishers — only created if the corresponding value is being logged
-  private DoublePublisher velocityPub, targetVelocityPub;
-  private DoublePublisher positionPub, targetPositionPub;
-  private DoublePublisher currentPub;
-  private DoublePublisher temperaturePub;
-  private DoublePublisher outputVoltagePub;
+  // Table for this motor
+  private TelemetryTable m_table;
 
   // Test result — always created, lives under Test/<motorName>_OK
   private final BooleanPublisher testResultPub;
@@ -92,13 +87,15 @@ public class LoggableSparkFlex extends SparkFlex {
 
   private double id = 0;
 
+  //Telemetry migration guide: https://github.com/wpilibsuite/allwpilib/blob/main/telemetry/doc/telemetry.md#migration-from-wpilib-2026
+
   // ── Constructor ───────────────────────────────────────────────────────────
 
   /**
    * @param canPort Port - see CANPort.java for available ports
    * @param canId CAN ID of the motor
    * @param motorType brushless or brushed
-   * @param parentTable the subsystem's NT table (e.g. m_table)
+   * @param parentTable the subsystem's Telemetry table (e.g. m_table)
    * @param motorName name for this motor's subtable (e.g. "Left Motor")
    * @param encoderType whether to use the relative or absolute encoder
    * @param valuesToLog which values to publish (varargs, pick any combination)
@@ -107,7 +104,7 @@ public class LoggableSparkFlex extends SparkFlex {
       CANPort bus,
       int canId,
       MotorType motorType,
-      NetworkTable parentTable,
+      TelemetryTable parentTable,
       String motorName,
       EncoderType encoderType,
       LoggedValue... valuesToLog) {
@@ -130,25 +127,7 @@ public class LoggableSparkFlex extends SparkFlex {
             : EnumSet.noneOf(LoggedValue.class);
 
     // Motor data lives under the subsystem table e.g. Shooter/Left Motor/
-    NetworkTable table = parentTable.getSubTable(motorName);
-
-    if (logs(LoggedValue.VELOCITY)) {
-      velocityPub = table.getDoubleTopic("Current Velocity").publish();
-      targetVelocityPub = table.getDoubleTopic("Target Velocity").publish();
-    }
-    if (logs(LoggedValue.POSITION)) {
-      positionPub = table.getDoubleTopic("Current Position").publish();
-      targetPositionPub = table.getDoubleTopic("Target Position").publish();
-    }
-    if (logs(LoggedValue.CURRENT)) {
-      currentPub = table.getDoubleTopic("Output Current").publish();
-    }
-    if (logs(LoggedValue.TEMPERATURE)) {
-      temperaturePub = table.getDoubleTopic("Temperature").publish();
-    }
-    if (logs(LoggedValue.OUTPUT_VOLTAGE)) {
-      outputVoltagePub = table.getDoubleTopic("Output Voltage").publish();
-    }
+    m_table = parentTable.getTable(motorName);
 
     // Test result lives under Test/<motorName>_OK — always created
     testResultPub =
@@ -222,21 +201,21 @@ public class LoggableSparkFlex extends SparkFlex {
             : relativeEncoder.getPosition().get(0.0);
 
     if (logs(LoggedValue.VELOCITY)) {
-      velocityPub.set(currentVelocity);
-      targetVelocityPub.set(targetVelocity);
+      m_table.log("Current Velocity", currentVelocity);
+      m_table.log("Target Velocity", targetVelocity);
     }
     if (logs(LoggedValue.POSITION)) {
-      positionPub.set(currentPosition);
-      targetPositionPub.set(targetPosition);
+      m_table.log("Current Position", currentPosition);
+      m_table.log("Target Position", targetPosition);
     }
     if (logs(LoggedValue.CURRENT)) {
-      currentPub.set(getOutputCurrent().get(0.));
+      m_table.log("Output Current", getOutputCurrent().get(0.));
     }
     if (logs(LoggedValue.TEMPERATURE)) {
-      temperaturePub.set(getMotorTemperature().get(0.));
+      m_table.log("Temperature", getMotorTemperature().get(0.));
     }
     if (logs(LoggedValue.OUTPUT_VOLTAGE)) {
-      outputVoltagePub.set(getBusVoltage().get(0.) * getAppliedOutput().get(0.));
+      m_table.log("Output Voltage", getBusVoltage().get(0.) * getAppliedOutput().get(0.));
     }
   }
 

@@ -8,8 +8,9 @@ import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
-import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.telemetry.Telemetry;
+import org.wpilib.telemetry.TelemetryTable;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import org.wpilib.command2.SubsystemBase;
@@ -22,15 +23,14 @@ import frc.robot.util.logging.LoggableSparkFlex.LoggedValue;
 
 public class Hopper extends SubsystemBase implements Testable {
 
-  private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
-  private final NetworkTable m_table = m_inst.getTable("Hopper");
+  private final TelemetryTable m_hopperTelemetry = Telemetry.getTable("Hopper");
 
   private final LoggableSparkFlex m_hopperMotor =
       new LoggableSparkFlex(
           BusConstants.HOPPER_BUS,
           HopperConstants.HOPPER_MOTOR_ID,
           MotorType.kBrushless,
-          m_table,
+          m_hopperTelemetry,
           "Rollers",
           EncoderType.RELATIVE,
           LoggedValue.VELOCITY,

@@ -6,8 +6,8 @@ import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
-import org.wpilib.networktables.NetworkTable;
-import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.telemetry.Telemetry;
+import org.wpilib.telemetry.TelemetryTable;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import org.wpilib.command2.SubsystemBase;
@@ -20,8 +20,7 @@ import frc.robot.util.logging.LoggableSparkFlex.LoggedValue;
   
 public class Intake extends SubsystemBase implements Testable {
 
-  private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
-  private final NetworkTable m_table = m_inst.getTable("Intake");
+  private final TelemetryTable m_intakeTelemetry = Telemetry.getTable("Intake");
 
   // Motors
   private final LoggableSparkFlex m_intakeRightMotor =
@@ -29,7 +28,7 @@ public class Intake extends SubsystemBase implements Testable {
           BusConstants.INTAKE_BUS,
           IntakeConstants.INTAKE_RIGHT_MOTOR_ID,
           MotorType.kBrushless,
-          m_table,
+          m_intakeTelemetry,
           "Right Arm",
           EncoderType.RELATIVE,
           LoggedValue.POSITION,
@@ -40,7 +39,7 @@ public class Intake extends SubsystemBase implements Testable {
           BusConstants.INTAKE_BUS,
           IntakeConstants.INTAKE_LEFT_MOTOR_ID,
           MotorType.kBrushless,
-          m_table,
+          m_intakeTelemetry,
           "Left Arm",
           EncoderType.RELATIVE,
           LoggedValue.POSITION,
@@ -51,7 +50,7 @@ public class Intake extends SubsystemBase implements Testable {
           BusConstants.INTAKE_BUS,
           IntakeConstants.INTAKE_SPINNERS_MOTOR_ID,
           MotorType.kBrushless,
-          m_table,
+          m_intakeTelemetry,
           "Spinner",
           EncoderType.RELATIVE,
           LoggedValue.VELOCITY);
