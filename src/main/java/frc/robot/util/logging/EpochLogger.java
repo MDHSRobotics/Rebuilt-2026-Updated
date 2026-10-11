@@ -7,9 +7,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import com.ctre.phoenix6.Utils;
+
 
 import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.driverstation.MatchState;
+import org.wpilib.networktables.NetworkTablesJNI;
 import org.wpilib.system.Timer;
 import org.wpilib.system.Tracer;
 
@@ -52,7 +55,7 @@ public class EpochLogger {
                 if (line.startsWith("\tSmart ")) {
                     
 
-                    writer.write("=== Timestamp: " + getTimestampString() + " Game Time: " + getGameTimeString() + "===");
+                    writer.write("=== Timestamp: " + getTimestampString() + " Game Time: " + getGameTimeString() + " NT Time: " + (NetworkTablesJNI.now() / 1_000_000_000.0) + " CTRE Time: " + Utils.getCurrentTimeSeconds() + "===");
                     writer.newLine();
                 }
                 writer.write(line);

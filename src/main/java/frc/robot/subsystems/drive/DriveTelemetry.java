@@ -29,6 +29,8 @@ import frc.robot.Constants.VisionConstants;
 public class DriveTelemetry {
   private final double MaxSpeed;
 
+  private int counter;
+
   /**
    * Construct a telemetry object, with the specified max speed of the robot
    *
@@ -189,6 +191,13 @@ public class DriveTelemetry {
       m_moduleDirections[i].setAngle(state.ModuleVelocities[i].angle);
       m_moduleSpeeds[i].setLength(state.ModuleVelocities[i].velocity / (2 * MaxSpeed));
     }
+
+    if (counter == 1000) {
+        System.out.println(state.Pose.getX());
+        counter = 0;
+    }
+
+    counter++;
 
     /* Write the swerve drive state to the log file */
     SignalLogger.writeStruct("DriveState", state.getStruct(), state, state.Timestamp);
