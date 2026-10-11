@@ -15,9 +15,11 @@ import org.wpilib.networktables.PubSubOption;
 import org.wpilib.networktables.StringPublisher;
 import org.wpilib.networktables.StructArrayPublisher;
 import org.wpilib.networktables.StructPublisher;
+import org.wpilib.smartdashboard.Field2d;
 import org.wpilib.smartdashboard.Mechanism2d;
 import org.wpilib.smartdashboard.MechanismLigament2d;
 import org.wpilib.telemetry.Telemetry;
+import org.wpilib.telemetry.TelemetryTable;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
 import org.wpilib.networktables.NetworkTablesJNI;
@@ -43,6 +45,12 @@ public class DriveTelemetry {
       Telemetry.log("Module " + i, m_moduleMechanisms[i]);
     }
   }
+  
+  /* Table for swerve telemetry publishing */
+  private final TelemetryTable swerveTelem = Telemetry.getTable("Swerve");
+
+  /* Robot pose on a field */
+  private final Field2d field = new Field2d();
 
   /* What to publish over networktables for telemetry */
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
@@ -181,6 +189,16 @@ public class DriveTelemetry {
       m_moduleDirections[i].setAngle(state.ModuleVelocities[i].angle);
       m_moduleSpeeds[i].setLength(state.ModuleVelocities[i].velocity / (2 * MaxSpeed));
     }
+
+    /* Write the swerve drive state to the log file */
+    SignalLogger.writeStruct("DriveState", state.getStruct(), state, state.Timestamp);
+
+    /* Also telemeterize the swerve drive state */
+    swerveTelem.log("DriveState", state, state.getStruct());
+
+    /* Telemeterize the pose to a Field2d */
+    field.setRobotPose(state.Pose);
+    swerveTelem.log("Pose", field);
   }
 
     /**

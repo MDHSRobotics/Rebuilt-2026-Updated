@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.driverstation.MatchState;
 import org.wpilib.system.Timer;
 import org.wpilib.system.Tracer;
 
@@ -49,11 +50,9 @@ public class EpochLogger {
         tracer.printEpochs(line -> {
             try {
                 if (line.startsWith("\tSmart ")) {
-                    String timestamp = LocalDateTime.now().format(
-                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
-                    );
+                    
 
-                    writer.write("=== " + timestamp + "===");
+                    writer.write("=== Timestamp: " + getTimestampString() + " Game Time: " + getGameTimeString() + "===");
                     writer.newLine();
                 }
                 writer.write(line);
@@ -86,5 +85,13 @@ public class EpochLogger {
             writer = null;
             flushTimer.stop();
         }
+    }
+
+    private String getTimestampString() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
+    }
+
+    private String getGameTimeString() {
+        return Double.toString(MatchState.getMatchTime());
     }
 }
