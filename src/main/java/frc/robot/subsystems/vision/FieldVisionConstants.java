@@ -7,11 +7,11 @@
 
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.util.Units;
+import org.wpilib.fields.Field;
+import org.wpilib.fields.Fields;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Transform3d;
+import org.wpilib.math.util.Units;
 import frc.robot.Constants;
 
 public class FieldVisionConstants {
@@ -39,32 +39,22 @@ public class FieldVisionConstants {
   public static CameraSpec[] robotCameras = {
     new CameraSpec(
         VisionType.LIMELIGHT,
-        "front_camera",
+        Constants.VisionConstants.FRONT_LIMELIGHT_NAME,
         new Transform3d(
-            Constants.robotLengthInMeters / 2.0, 0.0, 0.2, new Rotation3d(0.0, -0.4, 0.0))),
-    new CameraSpec(
-        VisionType.LIMELIGHT,
-        "back_camera",
-        new Transform3d(
-            -Constants.robotLengthInMeters / 2.0, 0.0, 0.2, new Rotation3d(0.0, -0.4, Math.PI)))
+            Constants.VisionConstants.FRONT_LIMELIGHT_FORWARD_DISTANCE,
+            0.0,
+            Constants.VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
+            new Rotation3d(
+                0.0, Math.toRadians(Constants.VisionConstants.FRONT_LIMELIGHT_PITCH), 0.0)))
   };
 
   // The following is a definition of all cameras on a test harness used to testing
   // vision hardware-in-the-loop in simulation mode.
-  public static CameraSpec[] hardwareInLoopCameras = {
-    new CameraSpec(
-        VisionType.LIMELIGHT,
-        "limelight-one",
-        new Transform3d(
-            Constants.robotLengthInMeters / 2.0,
-            0.0,
-            Units.inchesToMeters(26.),
-            new Rotation3d(0.0, 0.0, 0.0))),
-  };
+  public static CameraSpec[] hardwareInLoopCameras = {};
 
   // AprilTag layout
-  public static AprilTagFieldLayout aprilTagLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+  public static Field aprilTagLayout =
+      Fields.FRC_2026_REBUILT_WELDED.loadField();
 
   // Basic filtering thresholds
   public static double maxAmbiguity = 0.3;

@@ -7,8 +7,8 @@
 
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface FieldVisionIO {
@@ -16,7 +16,7 @@ public interface FieldVisionIO {
   public static class VisionIOInputs {
     public boolean connected = false;
     public TargetObservation latestTargetObservation =
-        new TargetObservation(Rotation2d.kZero, Rotation2d.kZero);
+        new TargetObservation(Rotation2d.ZERO, Rotation2d.ZERO);
     public PoseObservation[] poseObservations = new PoseObservation[0];
     public int[] tagIds = new int[0];
   }
