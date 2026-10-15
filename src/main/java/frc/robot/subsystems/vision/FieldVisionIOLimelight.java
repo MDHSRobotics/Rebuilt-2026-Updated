@@ -34,7 +34,6 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
   private final Supplier<Rotation2d> rotationSupplier;
   private final DoubleArrayPublisher orientationPublisher;
 
-  private final DoubleSubscriber latencySubscriber;
   private final DoubleSubscriber txSubscriber;
   private final DoubleSubscriber tySubscriber;
   private final DoubleArraySubscriber megatag1Subscriber;
@@ -57,7 +56,6 @@ private static final double CONNECTION_TIMEOUT = 0.5; // seconds
     var table = NetworkTableInstance.getDefault().getTable(cameraName);
     this.rotationSupplier = rotationSupplier;
     orientationPublisher = table.getDoubleArrayTopic("robot_orientation_set").publish();
-    latencySubscriber = table.getDoubleTopic("tl").subscribe(0.0);
     txSubscriber = table.getDoubleTopic("tx").subscribe(0.0);
     tySubscriber = table.getDoubleTopic("ty").subscribe(0.0);
     megatag1Subscriber = table.getDoubleArrayTopic("botpose_wpiblue").subscribe(new double[] {});
@@ -92,6 +90,10 @@ private static final double CONNECTION_TIMEOUT = 0.5; // seconds
 
     // Update orientation for MegaTag 2
     orientationPublisher.accept(
+        // NOTE: !!!!
+        // The following provides Limelight with the current robot heading but not its angular velocity.
+        // It's fine for initial testing. 
+        // We can revisit supplying the actual yaw rate if we see problems during rotation.
         new double[] {rotationSupplier.get().getDegrees(), 0.0, 0.0, 0.0, 0.0, 0.0});
     NetworkTableInstance.getDefault()
         .flush(); // Increases network traffic but recommended by Limelight
@@ -106,7 +108,8 @@ private static final double CONNECTION_TIMEOUT = 0.5; // seconds
       }
       poseObservations.add(
           new PoseObservation(
-              // Timestamp, based on server timestamp of publish and latency
+              // Timestamp converted from local NetworkTables time to CTRE time,
+              // corrected for Limelight processing latency
               getVisionTimestamp(rawSample.timestamp, rawSample.value[6]),
 
               // 3D pose estimate
@@ -132,7 +135,8 @@ private static final double CONNECTION_TIMEOUT = 0.5; // seconds
       }
       poseObservations.add(
           new PoseObservation(
-              // Timestamp, based on server timestamp of publish and latency
+              // Timestamp converted from local NetworkTables time to CTRE time,
+              // corrected for Limelight processing latency
               getVisionTimestamp(rawSample.timestamp, rawSample.value[6]),
 
               // 3D pose estimate
@@ -181,23 +185,22 @@ private static final double CONNECTION_TIMEOUT = 0.5; // seconds
    * This allows FieldVision to continue using a simple double timestampSeconds without knowing anything about CTRE.
    * The conversion occurs at the hardware IO boundary, where it belongs.
    */
+
+  
   private static double getVisionTimestamp(
-      long ntTimestampMicroseconds,
-      double latencyMilliseconds) {
+    long ntTimestampNanoseconds,
+    double latencyMilliseconds) {
 
-    double ntNowSeconds =
-        NetworkTablesJNI.now() * 1.0e-6;
-
-    double ctreNowSeconds =
-        Utils.getCurrentTimeSeconds();
-
+    // NetworkTables timestamps are nanoseconds in WPILib 2027.
     // *** IMPORTANT: This assumes that the NetworkTables sample timestamp and NetworkTablesJNI.now() 
-    // *** share the same clock domain. 
+    // *** share the same clock domain of nanoseconds. This was confirmed by reading the code in 
+    // *** NetworkTablesJNI.java and TimestampedDoubleArray.timestamp
     // ***
-    // *** We should verify that assumption on SystemCore before trusting the resulting pose corrections.
-    // ***
+    double ntNowSeconds = NetworkTablesJNI.now() * 1.0e-9;
+    double ctreNowSeconds = Utils.getCurrentTimeSeconds();
+
     return ctreNowSeconds
-        - (ntNowSeconds - ntTimestampMicroseconds * 1.0e-6)
+        - (ntNowSeconds - ntTimestampNanoseconds * 1.0e-9)
         - latencyMilliseconds * 1.0e-3;
-  }
+}
 }
