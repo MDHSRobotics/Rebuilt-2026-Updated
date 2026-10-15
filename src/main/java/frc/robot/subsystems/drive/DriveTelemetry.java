@@ -11,7 +11,6 @@ import org.wpilib.networktables.DoubleArrayPublisher;
 import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.networktables.PubSubOption;
 import org.wpilib.networktables.StringPublisher;
 import org.wpilib.networktables.StructArrayPublisher;
 import org.wpilib.networktables.StructPublisher;
@@ -23,7 +22,6 @@ import org.wpilib.telemetry.TelemetryTable;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
 import org.wpilib.networktables.NetworkTablesJNI;
-import frc.robot.Constants.VisionConstants;
 
 
 public class DriveTelemetry {
@@ -56,15 +54,6 @@ public class DriveTelemetry {
 
   /* What to publish over networktables for telemetry */
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
-
-  private final DoubleArrayPublisher m_megatag2FrontUpdater =
-      m_inst
-          .getTable(VisionConstants.FRONT_LIMELIGHT_NAME)
-          .getDoubleArrayTopic("robot_orientation_set")
-          .publish(PubSubOption.periodic(0.004));
-
-  /** Limelight requires this to be an array of size 6 */
-  private double[] m_megatag2Orientation = new double[6];
 
   /* Robot swerve drive state */
   private final NetworkTable m_driveStateTable = m_inst.getTable("DriveState");
@@ -144,14 +133,6 @@ public class DriveTelemetry {
   public void telemeterize(SwerveDriveState state) {
     long timeStampNanoseconds = stateTimestampToNTTimestamp(state.Timestamp);
 
-    /*Send the robot orientation to the limelight for megatag2 */
-    m_megatag2Orientation[0] = state.Pose.getRotation().getDegrees();
-    m_megatag2Orientation[1] = state.Velocity.omega * 180 / Math.PI;
-    m_megatag2FrontUpdater.set(m_megatag2Orientation, timeStampNanoseconds);
-    // Flushing is ESSENTIAL for the limelight to receive accurate yaw and give accurate pose
-    // estimates.
-    m_inst.flush();
-
     /* Telemeterize the swerve drive state */
     m_drivePosePub.set(state.Pose, timeStampNanoseconds);
     m_driveSpeedsPub.set(state.Velocity, timeStampNanoseconds);
@@ -219,7 +200,15 @@ public class DriveTelemetry {
      * @return The equivalent NetworkTables local timestamp in nanoseconds
      */
     public static long stateTimestampToNTTimestamp(double stateTimestampSeconds) {
+    // *** IMPORTANT: This assumes that the NetworkTables sample timestamp and NetworkTablesJNI.now() 
+    // *** share the same clock domain of nanoseconds. This was confirmed by reading the code in 
+    // *** NetworkTablesJNI.java
+    // ***
+
+    // Convert the age of the CTRE state from seconds to nanoseconds,
+    // then subtract it from the current NetworkTables timestamp.
     long ntNowNanoseconds = NetworkTablesJNI.now();
+
     double ctreNowSeconds = Utils.getCurrentTimeSeconds();
 
     return ntNowNanoseconds
