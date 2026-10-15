@@ -15,7 +15,11 @@ import org.wpilib.networktables.DoubleArrayPublisher;
 import org.wpilib.networktables.DoubleArraySubscriber;
 import org.wpilib.networktables.DoubleSubscriber;
 import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.NetworkTablesJNI;
 import org.wpilib.system.Timer;
+
+import com.ctre.phoenix6.Utils;
+
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +39,12 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
   private final DoubleSubscriber tySubscriber;
   private final DoubleArraySubscriber megatag1Subscriber;
   private final DoubleArraySubscriber megatag2Subscriber;
+  private final DoubleSubscriber heartbeatSubscriber;
+
+  private double lastHeartbeat = Double.NaN;
+  private double lastHeartbeatTime = Double.NEGATIVE_INFINITY;
+
+private static final double CONNECTION_TIMEOUT = 0.5; // seconds
 
   /**
    * Creates a new VisionIOLimelight.
@@ -53,6 +63,7 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
     megatag1Subscriber = table.getDoubleArrayTopic("botpose_wpiblue").subscribe(new double[] {});
     megatag2Subscriber =
         table.getDoubleArrayTopic("botpose_orb_wpiblue").subscribe(new double[] {});
+    heartbeatSubscriber = table.getDoubleTopic("hb").subscribe(0.0);  
   }
 
   // Get a human-friendly name for this interface
@@ -62,10 +73,17 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
-    // Update connection status based on whether an update has been seen in the last
-    // 250ms
-    inputs.connected =
-        ((Timer.getTimestamp() - latencySubscriber.getLastChange()) / 1000) < 250;
+
+    // Update connection status based on whether Limelight has published a recent heartbeat
+    double currentTime = Timer.getTimestamp();
+    double heartbeat = heartbeatSubscriber.get();
+
+    if (heartbeatSubscriber.getLastChange() != 0 && heartbeat != lastHeartbeat) {
+        lastHeartbeat = heartbeat;
+        lastHeartbeatTime = currentTime;
+    }
+
+    inputs.connected = (currentTime - lastHeartbeatTime) < CONNECTION_TIMEOUT;
 
     // Update target observation
     inputs.latestTargetObservation =
@@ -82,14 +100,14 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
     Set<Integer> tagIds = new HashSet<>();
     List<PoseObservation> poseObservations = new LinkedList<>();
     for (var rawSample : megatag1Subscriber.readQueue()) {
-      if (rawSample.value.length == 0) continue;
-      for (int i = 11; i < rawSample.value.length; i += 7) {
+      if (rawSample.value.length < 11 || rawSample.value[7] <= 0) continue;
+      for (int i = 11; i + 6 < rawSample.value.length; i += 7) {
         tagIds.add((int) rawSample.value[i]);
       }
       poseObservations.add(
           new PoseObservation(
               // Timestamp, based on server timestamp of publish and latency
-              rawSample.timestamp * 1.0e-6 - rawSample.value[6] * 1.0e-3,
+              getVisionTimestamp(rawSample.timestamp, rawSample.value[6]),
 
               // 3D pose estimate
               parsePose(rawSample.value),
@@ -108,14 +126,14 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
               PoseObservationType.MEGATAG_1));
     }
     for (var rawSample : megatag2Subscriber.readQueue()) {
-      if (rawSample.value.length == 0) continue;
-      for (int i = 11; i < rawSample.value.length; i += 7) {
+      if (rawSample.value.length < 11 || rawSample.value[7] <= 0) continue;
+      for (int i = 11; i + 6 < rawSample.value.length; i += 7) {
         tagIds.add((int) rawSample.value[i]);
       }
       poseObservations.add(
           new PoseObservation(
               // Timestamp, based on server timestamp of publish and latency
-              rawSample.timestamp * 1.0e-6 - rawSample.value[6] * 1.0e-3,
+              getVisionTimestamp(rawSample.timestamp, rawSample.value[6]),
 
               // 3D pose estimate
               parsePose(rawSample.value),
@@ -157,5 +175,29 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
             Units.degreesToRadians(rawLLArray[3]),
             Units.degreesToRadians(rawLLArray[4]),
             Units.degreesToRadians(rawLLArray[5])));
+  }
+
+  /* Gets the timestamp for a vision measurement based on NetworkTables timestamp and latency.
+   * This allows FieldVision to continue using a simple double timestampSeconds without knowing anything about CTRE.
+   * The conversion occurs at the hardware IO boundary, where it belongs.
+   */
+  private static double getVisionTimestamp(
+      long ntTimestampMicroseconds,
+      double latencyMilliseconds) {
+
+    double ntNowSeconds =
+        NetworkTablesJNI.now() * 1.0e-6;
+
+    double ctreNowSeconds =
+        Utils.getCurrentTimeSeconds();
+
+    // *** IMPORTANT: This assumes that the NetworkTables sample timestamp and NetworkTablesJNI.now() 
+    // *** share the same clock domain. 
+    // ***
+    // *** We should verify that assumption on SystemCore before trusting the resulting pose corrections.
+    // ***
+    return ctreNowSeconds
+        - (ntNowSeconds - ntTimestampMicroseconds * 1.0e-6)
+        - latencyMilliseconds * 1.0e-3;
   }
 }
