@@ -37,15 +37,11 @@ import org.wpilib.driverstation.DriverStation;
 //import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.system.Filesystem;
 import org.wpilib.framework.RobotBase;
-import org.wpilib.framework.TimedRobot;
 import org.wpilib.system.Tracer;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.CommandScheduler;
-import frc.robot.Constants.VisionConstants;
 //SYSTEMCORE import frc.robot.util.Elastic;
-import com.limelightvision.Limelight;
 import com.revrobotics.util.StatusLogger;
-import com.limelightvision.IMUMode;
 
 import frc.robot.util.logging.EpochLogger;
 import frc.robot.util.logging.LoggableSparkFlex;
@@ -58,8 +54,6 @@ public class Robot extends LoggedRobot {
   private final RobotContainer m_robotContainer;
   private DoublePublisher m_matchTimePub;
   private boolean m_hasAppliedRobotRotation;
-
-  private Limelight m_frontLimelight;
 
   private final Tracer m_tracer = new Tracer();
   private final EpochLogger epochLogger = new EpochLogger(m_tracer);
@@ -116,26 +110,6 @@ public class Robot extends LoggedRobot {
     }
 
     m_matchTimePub = NetworkTableInstance.getDefault().getDoubleTopic("Match Time").publish();
-
-    m_frontLimelight = new Limelight(VisionConstants.FRONT_LIMELIGHT_NAME);
-    // Use shared robot orientation for MegaTag2
-    m_frontLimelight.setUseSharedOrientation(true);
-
-    // Configure Limelight Positions
-    m_frontLimelight.setCameraPose_RobotSpaceOverride(
-        VisionConstants.FRONT_LIMELIGHT_FORWARD_DISTANCE,
-        0.,
-        VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
-        0.,
-        VisionConstants.FRONT_LIMELIGHT_PITCH,
-        0.,
-        true);
-
-    //SYSTEMCORE: The previous setimumode call passed in a value of 1 (external IMU, seed internal IMU?)
-    m_frontLimelight.setIMUMode(IMUMode.EXTERNAL_SEED_INTERNAL);
-
-    m_frontLimelight.setThrottle(200);
-    // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
 
     //  LOGGING SETUP
     StatusLogger.disableAutoLogging();
@@ -197,15 +171,6 @@ public class Robot extends LoggedRobot {
     m_robotContainer.updateDashboardOutputs();
     m_tracer.addEpoch("Smart Dashboard");
     epochLogger.update();
-    
-    // Feed the robot orientation into the MegaTag2 system for vision processing
-    Limelight.setSharedRobotOrientation(
-        m_robotContainer
-            .getDrivetrain()
-            .getState()
-            .Pose
-            .getRotation()
-            .getDegrees());
   }
 
   @Override
@@ -223,8 +188,6 @@ public class Robot extends LoggedRobot {
         m_hasAppliedRobotRotation = true;
       }
     }
-    //SYSTEMCORE: The previous setimumode call passed in a value of 1 (external IMU, seed internal IMU)
-    m_frontLimelight.setIMUMode(IMUMode.EXTERNAL_SEED_INTERNAL);
   }
 
   @Override
@@ -239,29 +202,19 @@ public class Robot extends LoggedRobot {
       System.out.println("Starting Auto: " + autoCommandName);
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
-
-    //SYSTEMCORE: The previous setimumode call passed in a value of 4 (internal IMU assisted by external IMU?)
-    m_frontLimelight.setIMUMode(IMUMode.INTERNAL_EXTERNAL_ASSIST);
-
-    m_frontLimelight.setThrottle(0);
   }
 
   @Override
   public void autonomousPeriodic() {}
 
   @Override
-  public void autonomousExit() {
-    m_frontLimelight.setThrottle(200);
-  }
+  public void autonomousExit() {}
 
   @Override
   public void teleopInit() {
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().cancel(m_autonomousCommand);
     }
-
-    m_frontLimelight.setIMUMode(IMUMode.INTERNAL_EXTERNAL_ASSIST);
-    m_frontLimelight.setThrottle(0);
 
     //SYSTEMCORE Elastic.selectTab("Teleoperated");
   }
@@ -276,10 +229,6 @@ public class Robot extends LoggedRobot {
   public void utilityInit() {
     CommandScheduler.getInstance().cancelAll();
 
-
-    m_frontLimelight.setIMUMode(IMUMode.INTERNAL_EXTERNAL_ASSIST);
-    m_frontLimelight.setThrottle(0);
-
     m_robotContainer.resetFieldPosition(
         new Pose2d(Meters.of(0), Meters.of(0), Rotation2d.fromDegrees(180)));
   }
@@ -288,12 +237,7 @@ public class Robot extends LoggedRobot {
   public void utilityPeriodic() {}
 
   @Override
-  public void utilityExit() {
-
-    m_frontLimelight.setIMUMode(IMUMode.EXTERNAL_SEED_INTERNAL);
-    m_frontLimelight.setThrottle(200);
-
-  }
+  public void utilityExit() {}
 
   @Override
   public void simulationPeriodic() {}
