@@ -25,6 +25,7 @@ import org.wpilib.command2.button.CommandXboxController;
 import org.wpilib.command2.button.RobotModeTriggers;
 import org.wpilib.command2.button.Trigger;
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.commands.AimingCommand;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -36,6 +37,8 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
+import frc.robot.subsystems.vision.FieldVision;
+import frc.robot.subsystems.vision.FieldVisionIOLimelight;
 import frc.robot.util.DynamicAutoCreator;
 import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
@@ -53,6 +56,7 @@ public class RobotContainer {
   private final Intake m_intake = new Intake();
   private final Hopper m_hopper = new Hopper();
   private final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
+  private FieldVision m_fieldVision;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric m_drive =
@@ -102,6 +106,14 @@ private Trigger m_intakes =
   // public EnergyMonitor energyMonitor = new EnergyMonitor();
 
   public RobotContainer() {
+
+    m_fieldVision = new FieldVision(
+    m_drivetrain::addVisionMeasurement,
+    new FieldVisionIOLimelight(
+        VisionConstants.FRONT_LIMELIGHT_NAME,
+        () -> m_drivetrain.getState().Pose.getRotation()
+    ));
+    
     setDefaultCommands();
     configureDriverControllers();
     configureOperatorControllers();
