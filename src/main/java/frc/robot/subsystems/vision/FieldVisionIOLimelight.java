@@ -26,10 +26,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import com.limelightvision.Limelight;
+
+import frc.robot.Constants;
+
+import com.limelightvision.IMUMode;
+import org.wpilib.driverstation.RobotState;
+
 /** IO implementation for real Limelight hardware. */
 public class FieldVisionIOLimelight implements FieldVisionIO {
 
   private final String cameraName;
+
+  private final Limelight limelight;
 
   private final Supplier<Rotation2d> rotationSupplier;
   private final DoubleArrayPublisher orientationPublisher;
@@ -43,6 +52,9 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
   private double lastHeartbeat = Double.NaN;
   private double lastHeartbeatTime = Double.NEGATIVE_INFINITY;
 
+  private boolean lastEnabled = false;
+  private boolean configurationInitialized = false;
+
 private static final double CONNECTION_TIMEOUT = 0.5; // seconds
 
   /**
@@ -53,6 +65,18 @@ private static final double CONNECTION_TIMEOUT = 0.5; // seconds
    */
   public FieldVisionIOLimelight(String name, Supplier<Rotation2d> rotationSupplier) {
     cameraName = name;
+
+    limelight = new Limelight(name);
+
+    limelight.setCameraPose_RobotSpaceOverride(
+        Constants.VisionConstants.FRONT_LIMELIGHT_FORWARD_DISTANCE,
+        0.0,
+        Constants.VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
+        0.0,
+        Constants.VisionConstants.FRONT_LIMELIGHT_PITCH,
+        0.0,
+        true);
+        
     var table = NetworkTableInstance.getDefault().getTable(cameraName);
     this.rotationSupplier = rotationSupplier;
     orientationPublisher = table.getDoubleArrayTopic("robot_orientation_set").publish();
@@ -71,6 +95,24 @@ private static final double CONNECTION_TIMEOUT = 0.5; // seconds
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
+
+boolean enabled = RobotState.isEnabled();
+
+    // Reduce the heat of the Limelight when the robot is disabled,
+    // and restore full processing when enabled.
+    if (!configurationInitialized || enabled != lastEnabled) {
+        if (enabled) {
+            // Robot enabled: full camera processing
+            limelight.setIMUMode(IMUMode.INTERNAL_EXTERNAL_ASSIST);
+            limelight.setThrottle(0);
+        } else {
+            // Robot disabled: reduce processing
+            limelight.setIMUMode(IMUMode.EXTERNAL_SEED_INTERNAL);
+            limelight.setThrottle(200);
+        }
+        lastEnabled = enabled;
+        configurationInitialized = true;
+    }
 
     // Update connection status based on whether Limelight has published a recent heartbeat
     double currentTime = Timer.getTimestamp();
