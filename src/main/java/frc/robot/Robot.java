@@ -4,6 +4,13 @@
 
 package frc.robot;
 
+import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGReader;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+
 import static org.wpilib.units.Units.Meters;
 
 import java.io.IOException;
@@ -44,7 +51,8 @@ import frc.robot.util.logging.EpochLogger;
 import frc.robot.util.logging.LoggableSparkFlex;
 //SYSTEMCORE import org.littletonrobotics.urcl.URCL;
 
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
+  
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
@@ -61,6 +69,46 @@ public class Robot extends TimedRobot {
   //     new HootAutoReplay().withTimestampReplay().withJoystickReplay();
 
   public Robot() {
+
+    // Record metadata
+    Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
+    Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
+    Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
+    Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
+    Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
+    Logger.recordMetadata(
+        "GitDirty",
+        switch (BuildConstants.DIRTY) {
+          case 0 -> "All changes committed";
+          case 1 -> "Uncommitted changes";
+          default -> "Unknown";
+        });
+
+    // Set up data receivers & replay source
+    switch (Constants.currentMode) {
+      case REAL:
+        // Running on a real robot, log to a USB stick ("/U/logs")
+        Logger.addDataReceiver(new WPILOGWriter());
+        Logger.addDataReceiver(new NT4Publisher());
+        break;
+
+      case SIM:
+        // Running a physics simulator, log to NT
+        Logger.addDataReceiver(new NT4Publisher());
+        break;
+
+      case REPLAY:
+        // Replaying a log, set up replay source
+        setUseTiming(false); // Run as fast as possible
+        String logPath = LogFileUtil.findReplayLog();
+        Logger.setReplaySource(new WPILOGReader(logPath));
+        Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+        break;
+    }
+
+    // Start AdvantageKit logger
+    Logger.start();
+
 
     if (RobotBase.isSimulation()) {
         DriverStationSim.setAllianceStationId(Constants.SIMULATION_ALLIANCE_STATION_ID);
@@ -241,7 +289,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void utilityExit() {
-    SignalLogger.stop();
 
     m_frontLimelight.setIMUMode(IMUMode.EXTERNAL_SEED_INTERNAL);
     m_frontLimelight.setThrottle(200);

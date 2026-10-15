@@ -5,6 +5,7 @@ import static org.wpilib.units.Units.Meters;
 
 import org.wpilib.fields.Field;
 import org.wpilib.fields.Fields;
+import org.wpilib.framework.RobotBase;
 import org.wpilib.math.linalg.VecBuilder;
 import org.wpilib.math.linalg.Vector;
 import org.wpilib.math.geometry.Rotation2d;
@@ -15,6 +16,25 @@ import org.wpilib.hardware.hal.AllianceStationID;
 
 public final class Constants {
   private Constants() {}
+
+  /**
+   * The following constants define the runtime mode used by AdvantageKit.
+   * The mode is always "REAL" when running on a roboRIO/Systemcore. 
+   * Change the value of "simMode" to switch between "SIM" (physics sim) and "REPLAY" (log replay from a file).
+   */
+  public static final Mode simMode = Mode.SIM;
+  public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+
+  public static enum Mode {
+    /** Running on a real robot. */
+    REAL,
+
+    /** Running a physics simulator. */
+    SIM,
+
+    /** Replaying from a log file. */
+    REPLAY
+  }
 
   /** The update period of the robot in seconds. */
   public static final double UPDATE_PERIOD = 0.02;
