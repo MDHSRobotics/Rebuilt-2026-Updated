@@ -109,13 +109,14 @@ private Trigger m_intakes =
 
   public RobotContainer() {
 
-    m_fieldVision = new FieldVision(
-    m_drivetrain::addVisionMeasurement,
-    new FieldVisionIOLimelight(
-        VisionConstants.FRONT_LIMELIGHT_NAME,
-        () -> m_drivetrain.getState().Pose.getRotation()
-    ));
-    
+    m_fieldVision = 
+        new FieldVision(
+            m_drivetrain::addVisionMeasurement,
+            new FieldVisionIOLimelight(
+                VisionConstants.FRONT_LIMELIGHT_NAME,
+                () -> m_drivetrain.getState().Pose.getRotation()
+            ));
+
     setDefaultCommands();
     configureDriverControllers();
     configureOperatorControllers();
