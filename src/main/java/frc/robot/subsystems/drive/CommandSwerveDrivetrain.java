@@ -1,6 +1,27 @@
 package frc.robot.subsystems.drive;
 
-import static org.wpilib.units.Units.*;
+import static org.wpilib.units.Units.Second;
+import static org.wpilib.units.Units.Volts;
+
+import java.util.function.Supplier;
+
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Subsystem;
+import org.wpilib.command2.sysid.SysIdRoutine;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StructPublisher;
+import org.wpilib.system.Notifier;
+import org.wpilib.system.RobotController;
+import org.wpilib.telemetry.Telemetry;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
@@ -11,42 +32,9 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import org.wpilib.math.linalg.Matrix;
-import org.wpilib.math.geometry.Pose2d;
-import org.wpilib.math.geometry.Rotation2d;
-import org.wpilib.math.geometry.Translation2d;
-import org.wpilib.math.geometry.Translation3d;
-import org.wpilib.math.kinematics.ChassisVelocities;
-import org.wpilib.math.numbers.N1;
-import org.wpilib.math.numbers.N3;
-import org.wpilib.networktables.DoubleArrayPublisher;
-import org.wpilib.networktables.DoubleArraySubscriber;
-import org.wpilib.networktables.NetworkTable;
-import org.wpilib.networktables.NetworkTableEvent;
-import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.networktables.NetworkTableValue;
-import org.wpilib.networktables.NetworkTablesJNI;
-import org.wpilib.networktables.StructArrayPublisher;
-import org.wpilib.networktables.StructPublisher;
-import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.system.Notifier;
-import org.wpilib.system.RobotController;
-import org.wpilib.telemetry.Telemetry;
-import org.wpilib.command2.Command;
-import org.wpilib.command2.Subsystem;
-import org.wpilib.command2.sysid.SysIdRoutine;
-import frc.robot.Constants.FieldConstants;
-import frc.robot.Constants.VisionConstants;
+
 import frc.robot.subsystems.drive.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.subsystems.drive.requests.ResettableSwerveRequest;
-import java.util.EnumSet;
-import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -162,36 +150,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
    */
   private final NetworkTable m_stateTable = m_inst.getTable("DriveState");
 
-  private final NetworkTable m_poseTable = m_stateTable.getSubTable("Poses");
-
-  private final NetworkTable m_driveTemps = m_stateTable.getSubTable("Drive Temperatures");
-
-  /** Logs the front bot pose estimate to AdvantageScope. */
-  private final StructPublisher<Pose2d> m_frontPoseEstimatePub =
-      m_poseTable.getStructTopic("Front Pose Estimate", Pose2d.struct).publish();
-
-  // private final StructPublisher<Pose2d> m_backPoseEstimatePub =
-  //     m_poseTable.getStructTopic("Back Pose Estimate", Pose2d.struct).publish();
-
   private final NetworkTable m_speedsTable = m_stateTable.getSubTable("Speeds");
   private final StructPublisher<ChassisVelocities> m_appliedSpeedsPub =
       m_speedsTable
           .getStructTopic("PathPlanner Applied Robot-relative Speeds", ChassisVelocities.struct)
           .publish();
-
-  private final NetworkTable m_tagsTable = m_stateTable.getSubTable("Apriltags");
-
-  /** Logs the tags that are currently visible from the front to AdvantageScope. */
-  private final StructArrayPublisher<Translation3d> m_frontVisibleTagsPub =
-      m_tagsTable.getStructArrayTopic("Front Visible Tags", Translation3d.struct).publish();
-
-  private final DoubleArrayPublisher m_frontToTagDistancePub =
-      m_tagsTable.getDoubleArrayTopic("Tag Distance to Front Camera").publish();
-
-  // private final StructArrayPublisher<Translation3d> m_backVisibleTagsPub =
-  //     m_tagsTable.getStructArrayTopic("Back Visible Tags", Translation3d.struct).publish();
-  // private final DoubleArrayPublisher m_backToTagDistancePub =
-  //     m_tagsTable.getDoubleArrayTopic("Tag Distance to Front Camera").publish();
 
   /**
    * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -209,7 +172,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       startSimThread();
     }
     configureAutoBuilder();
-    registerPoseEstimateListeners();
   }
 
   /**
@@ -232,7 +194,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       startSimThread();
     }
     configureAutoBuilder();
-    registerPoseEstimateListeners();
   }
 
   /**
@@ -266,7 +227,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       startSimThread();
     }
     configureAutoBuilder();
-    registerPoseEstimateListeners();
   }
 
   private void configureAutoBuilder() {
@@ -378,149 +338,4 @@ public void periodic() {
     m_simNotifier.startPeriodic(kSimLoopPeriod);
   }
 
-  /**
-   * Registers the limelight pose listeners, so the poses can be used as soon as they are recieved
-   * from the limelights.
-   *
-   * @see frc.robot.util.LimelightHelpers#getBotPoseEstimate(String, String, boolean) the reference
-   *     code for processing the input from this NetworkTable entry
-   * @see <a
-   *     href="https://docs.wpilib.org/en/stable/docs/software/networktables/listening-for-change.html">the
-   *     explanation for listeners</a>
-   * @see <a
-   *     href="https://docs.limelightvision.io/docs/docs-limelight/apis/complete-networktables-api#apriltag-and-3d-data">the
-   *     limelight NetworkTables API</a> (look for botpose_orb_wpiblue)
-   */
-  private void registerPoseEstimateListeners() {
-    DoubleArraySubscriber frontPoseEstimateSub =
-        m_inst
-            .getTable(VisionConstants.FRONT_LIMELIGHT_NAME)
-            .getDoubleArrayTopic("botpose_orb_wpiblue")
-            .subscribe(null);
-
-    m_inst.addListener(
-        frontPoseEstimateSub,
-        EnumSet.of(NetworkTableEvent.Kind.VALUE_ALL),
-        event -> {
-          NetworkTableValue value = event.valueData.value;
-          double[] poseArray = value.getDoubleArray();
-          // If there is no data available, don't use the data.
-          if (poseArray.length < 11) {
-            m_frontVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
-            m_frontToTagDistancePub.set(FieldConstants.NO_TAG_DISTANCES);
-            return;
-          }
-
-          /*Get bot pose estimate */
-          Translation2d botPose = new Translation2d(poseArray[0], poseArray[1]);
-          // Whenever the robot doesn't see any tags, it will send a pose of (0,0,0)
-          if (botPose.equals(Translation2d.ZERO)) {
-            m_frontVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
-            return;
-          }
-          Rotation2d botRotation = Rotation2d.fromDegrees(poseArray[5]);
-          Pose2d botPoseEstimate = new Pose2d(botPose, botRotation);
-
-          /* Get timestamp */
-          long timestampNanoseconds = value.getTime();
-
-          /* Log pose estimate to AdvantageScope */
-          m_frontPoseEstimatePub.set(botPoseEstimate, timestampNanoseconds);
-
-          // Convert the NetworkTables timestamp to the CTRE current-time timebase
-          // and adjust for Limelight latency.
-          double latencySeconds = poseArray[6] / 1000.0;
-
-          double ntNowSeconds = NetworkTablesJNI.now() / 1_000_000_000.0;
-          double ctreNowSeconds = Utils.getCurrentTimeSeconds();
-
-          double visionTimestampSeconds =
-              ctreNowSeconds
-                  - (ntNowSeconds - timestampNanoseconds / 1_000_000_000.0)
-                  - latencySeconds;
-
-          /*Log which apriltags are currently visible */
-          int tagCount = (int) poseArray[7];
-          int valsPerFiducial = 7;
-          int expectedTotalVals = 11 + valsPerFiducial * tagCount;
-
-          // If there is no more data available, stop logging
-          if (poseArray.length != expectedTotalVals || tagCount == 0) {
-            m_frontVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
-            m_frontToTagDistancePub.set(FieldConstants.NO_TAG_DISTANCES);
-            return;
-          }
-
-          Translation3d[] visibleTagPositions = new Translation3d[tagCount];
-          double[] distanceToTags = new double[tagCount];
-          for (int i = 0; i < tagCount; i++) {
-            int currentIndex = 11 + (i * valsPerFiducial);
-            int id = (int) poseArray[currentIndex];
-            double distance = poseArray[currentIndex + 4];
-            visibleTagPositions[i] =
-                FieldConstants.PLAYING_FIELD.getTagPose(id).orElseThrow().getTranslation();
-            distanceToTags[i] = distance;
-          }
-          m_frontVisibleTagsPub.set(visibleTagPositions, timestampNanoseconds);
-          m_frontToTagDistancePub.set(distanceToTags, timestampNanoseconds);
-
-          /* Add the vision measurement to the pose estimator */
-          // SYSTEMCORE: Verify NT local-time epoch matches CTRE current-time epoch.
-          this.addVisionMeasurement(
-              botPoseEstimate,
-              visionTimestampSeconds,
-              VisionConstants.FRONT_STD_DEVS);
-        });
-  }
-
-  /**
-   * Adds a vision measurement to the Kalman Filter. This will correct the odometry pose estimate
-   * while still accounting for measurement noise.
-   *
-   * @param visionRobotPoseMeters The pose of the robot as measured by the vision camera.
-   * @param timestampSeconds The timestamp of the vision measurement in seconds.
-   */
-  /* SYSTEMCORE BEGIN
-  @Override
-  public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
-    super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds));
-  }
-  SYSTEMCORE END */
-
-  /**
-   * Adds a vision measurement to the Kalman Filter. This will correct the odometry pose estimate
-   * while still accounting for measurement noise.
-   *
-   * <p>Note that the vision measurement standard deviations passed into this method will continue
-   * to apply to future measurements until a subsequent call to {@link
-   * #setVisionMeasurementStdDevs(Matrix)} or this method.
-   *
-   * @param visionRobotPoseMeters The pose of the robot as measured by the vision camera.
-   * @param timestampSeconds The timestamp of the vision measurement in seconds.
-   * @param visionMeasurementStdDevs Standard deviations of the vision pose measurement in the form
-   *     [x, y, theta]ᵀ, with units in meters and radians.
-   */
-  /* SYSTEMCORE BEGIN
-  @Override
-  public void addVisionMeasurement(
-      Pose2d visionRobotPoseMeters,
-      double timestampSeconds,
-      Matrix<N3, N1> visionMeasurementStdDevs) {
-    super.addVisionMeasurement(
-        visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
-  }
-  SYSTEMCORE END */
-
-  /**
-   * Return the pose at a given timestamp, if the buffer is not empty.
-   *
-   * @param timestampSeconds The timestamp of the pose in seconds.
-   * @return The pose at the given timestamp (or Optional.empty() if the buffer is empty).
-   */
-  /* SYSTEMCORE BEGIN
-  @Override
-  public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
-    return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
-  }
-    SYSTEMCORE END */
 }
