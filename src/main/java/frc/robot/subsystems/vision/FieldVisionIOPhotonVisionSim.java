@@ -31,7 +31,9 @@ public class FieldVisionIOPhotonVisionSim extends FieldVisionIOPhotonVision {
    */
   public FieldVisionIOPhotonVisionSim(
       String name, Transform3d robotToCamera, Supplier<Pose2d> poseSupplier) {
+
     super(name, robotToCamera);
+
     this.poseSupplier = poseSupplier;
 
     // Initialize vision sim
@@ -41,8 +43,16 @@ public class FieldVisionIOPhotonVisionSim extends FieldVisionIOPhotonVision {
     }
 
     // Add sim camera
+    // Use default properties for now, but we can add a way to configure them later if needed
+    // This includes the camera's field of view, resolution, and other properties that affect how it sees the world
     var cameraProperties = new SimCameraProperties();
+
     cameraSim = new PhotonCameraSim(camera, cameraProperties, aprilTagLayout);
+
+    cameraSim.enableRawStream(true);
+    cameraSim.enableProcessedStream(true);
+    cameraSim.enableDrawWireframe(true);
+    
     visionSim.addCamera(cameraSim, robotToCamera);
   }
 

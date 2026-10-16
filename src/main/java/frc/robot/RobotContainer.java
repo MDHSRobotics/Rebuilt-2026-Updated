@@ -27,6 +27,7 @@ import org.wpilib.command2.button.Trigger;
 import org.wpilib.command2.sysid.SysIdRoutine;
 
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.Constants.Mode;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.commands.AimingCommand;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
@@ -39,8 +40,14 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
+import frc.robot.subsystems.vision.CameraSpec;
 import frc.robot.subsystems.vision.FieldVision;
+import frc.robot.subsystems.vision.FieldVisionConstants;
+import frc.robot.subsystems.vision.FieldVisionIO;
 import frc.robot.subsystems.vision.FieldVisionIOLimelight;
+import frc.robot.subsystems.vision.FieldVisionIOPhotonVision;
+import frc.robot.subsystems.vision.FieldVisionIOPhotonVisionSim;
+import frc.robot.subsystems.vision.FieldVisionIOReplayable;
 import frc.robot.util.DynamicAutoCreator;
 import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
@@ -109,13 +116,11 @@ private Trigger m_intakes =
 
   public RobotContainer() {
 
-    m_fieldVision = 
-        new FieldVision(
-            m_drivetrain::addVisionMeasurement,
-            new FieldVisionIOLimelight(
-                VisionConstants.FRONT_LIMELIGHT_NAME,
-                () -> m_drivetrain.getState().Pose.getRotation()
-            ));
+    // Get the list of cameras on the robot for field orientation
+    List<FieldVisionIO> fieldVisionCameras = createFieldVisionIOList(FieldVisionConstants.robotCameras);
+    m_fieldVision = new FieldVision(
+            m_drivetrain::addVisionMeasurement, 
+            fieldVisionCameras.toArray(FieldVisionIO[]::new));
 
     setDefaultCommands();
     configureDriverControllers();
@@ -128,6 +133,61 @@ private Trigger m_intakes =
   public CommandSwerveDrivetrain getDrivetrain() {
     return m_drivetrain;
   } 
+
+  /** 
+   * Return a list of "cameras" based on the input cameraSpecArray. 
+   * The list will contain either real cameras, simulated cameras, 
+   * or replayable cameras depending on the current mode.
+   */
+  private List<FieldVisionIO> createFieldVisionIOList(CameraSpec[] cameraSpecArray) {
+
+    Boolean inPureSimulation = (Constants.currentMode == Mode.SIM) && !FieldVisionConstants.hardwareInTheLoop;
+
+        List<FieldVisionIO> fieldVisionIoList = new ArrayList<>();
+        for (int i = 0; i < cameraSpecArray.length; i++) {
+
+            if (Constants.currentMode == Mode.REPLAY) {
+                // Replaying a log file so create a dummy camera with the proper name
+                fieldVisionIoList.add(new FieldVisionIOReplayable(cameraSpecArray[i].cameraName));
+
+            } else if (inPureSimulation) {
+                // In pure simulation mode (i.e., without any hardware in the loop), always use
+                // PhotonVisionSim
+                // even if this is a Limelight because we cannot simulate Limelights
+                fieldVisionIoList.add(
+                    new FieldVisionIOPhotonVisionSim(
+                        cameraSpecArray[i].cameraName,
+                        cameraSpecArray[i].robotToCamera,
+                        () -> m_drivetrain.getState().Pose));
+            } else {
+                // We are either running with a real robot or in simulation mode with vision hardware in the
+                // loop so instatiate the real device (Limelight or PhotonVision) based on the camera type
+                switch (cameraSpecArray[i].visionType) {
+                case LIMELIGHT:
+                    fieldVisionIoList.add(
+                        new FieldVisionIOLimelight(cameraSpecArray[i].cameraName,
+                            cameraSpecArray[i].robotToCamera,
+                            () -> m_drivetrain.getState().Pose.getRotation()));
+                    break;
+
+                case PHOTONVISION:
+                    fieldVisionIoList.add(
+                        new FieldVisionIOPhotonVision(
+                            cameraSpecArray[i].cameraName, cameraSpecArray[i].robotToCamera));
+                    break;
+
+                default:
+                    throw new IllegalArgumentException(
+                        "Unknown vision type "
+                            + cameraSpecArray[i].visionType
+                            + " for camera "
+                            + cameraSpecArray[i].cameraName);
+                }
+            }
+        }
+
+        return fieldVisionIoList;
+    }
 
   /* Define the possible auto command options that can be chosen from the dashboard.
    * This includes:

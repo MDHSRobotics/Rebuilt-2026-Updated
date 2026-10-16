@@ -81,7 +81,7 @@ public final class Constants {
     /*Units: degrees */
     public static final double LIMELIGHT_MOUNT_ANGLE = 30;
 
-    /** Units: Degrees */
+    /** Units: Degrees - Up is positive */
     public static final double FRONT_LIMELIGHT_PITCH = 25;
 
     // These needs to be tested and adjusted later on

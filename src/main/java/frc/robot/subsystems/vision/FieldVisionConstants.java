@@ -17,7 +17,7 @@ import frc.robot.Constants;
 public class FieldVisionConstants {
 
   /** Are we running a physics simulator, but with a real camera connected. */
-  public static boolean hardwareInTheLoop = true;
+  public static final boolean hardwareInTheLoop = false;
 
   // Notes about robot to camera transforms
   // 1. These are not used for Limelight; instead you configure it in web UI. However, we
@@ -45,7 +45,8 @@ public class FieldVisionConstants {
             0.0,
             Constants.VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
             new Rotation3d(
-                0.0, Math.toRadians(Constants.VisionConstants.FRONT_LIMELIGHT_PITCH), 0.0)))
+                // Don't forget that the pitch should be negative to point up
+                0.0, -Math.toRadians(Constants.VisionConstants.FRONT_LIMELIGHT_PITCH), 0.0)))
   };
 
   // The following is a definition of all cameras on a test harness used to testing

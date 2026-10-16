@@ -10,6 +10,7 @@ package frc.robot.subsystems.vision;
 import org.wpilib.math.geometry.Pose3d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Transform3d;
 import org.wpilib.math.util.Units;
 import org.wpilib.networktables.DoubleArrayPublisher;
 import org.wpilib.networktables.DoubleArraySubscriber;
@@ -37,6 +38,7 @@ import org.wpilib.driverstation.RobotState;
 public class FieldVisionIOLimelight implements FieldVisionIO {
 
   private final String cameraName;
+  private final Transform3d robotToCamera; // Position and orientation of camera relative to robot
 
   private final Limelight limelight;
 
@@ -55,7 +57,7 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
   private boolean lastEnabled = false;
   private boolean configurationInitialized = false;
 
-private static final double CONNECTION_TIMEOUT = 0.5; // seconds
+  private static final double CONNECTION_TIMEOUT = 0.5; // seconds
 
   /**
    * Creates a new VisionIOLimelight.
@@ -63,18 +65,16 @@ private static final double CONNECTION_TIMEOUT = 0.5; // seconds
    * @param name The configured name of the Limelight.
    * @param rotationSupplier Supplier for the current estimated rotation, used for MegaTag 2.
    */
-  public FieldVisionIOLimelight(String name, Supplier<Rotation2d> rotationSupplier) {
-    cameraName = name;
+  public FieldVisionIOLimelight(String name, Transform3d robotToCamera, Supplier<Rotation2d> rotationSupplier) {
+    this.cameraName = name;
+    this.robotToCamera = robotToCamera;
 
     limelight = new Limelight(name);
 
     limelight.setCameraPose_RobotSpaceOverride(
-        Constants.VisionConstants.FRONT_LIMELIGHT_FORWARD_DISTANCE,
-        0.0,
-        Constants.VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
-        0.0,
-        Constants.VisionConstants.FRONT_LIMELIGHT_PITCH,
-        0.0,
+        new Pose3d(
+            robotToCamera.getTranslation(),
+            robotToCamera.getRotation()),
         true);
         
     var table = NetworkTableInstance.getDefault().getTable(cameraName);
