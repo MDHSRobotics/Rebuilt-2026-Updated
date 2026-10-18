@@ -17,13 +17,10 @@ import frc.robot.Constants;
 public class FieldVisionConstants {
 
   /** Are we running a physics simulator, but with a real camera connected. */
-  public static final boolean hardwareInTheLoop = false;
+  public static final boolean hardwareInTheLoop = true;
 
-  // Notes about robot to camera transforms
-  // 1. These are not used for Limelight; instead you configure it in web UI. However, we
-  //    include transforms even for Limelight because they are used by simulation.
-  //
-  // 2. Pay attention to the signs of the camera rotation because they are not intuitive,
+  //            ********** IMPORTANT NOTE ABOUT CAMERA TRANSFORMS ********
+  //    Pay attention to the signs of the camera rotation because they are not intuitive,
   //    especially the pitch. You would think that a camera pointed down to the floor
   //    would have a negative pitch but actually it should be positive. All the angles use
   //    the right-hand rule: point the thumb on your right hand in the positive direction
