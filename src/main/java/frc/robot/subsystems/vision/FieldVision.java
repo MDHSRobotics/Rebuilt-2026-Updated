@@ -16,6 +16,8 @@ import org.wpilib.math.geometry.Pose3d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.numbers.N1;
 import org.wpilib.math.numbers.N3;
+import org.wpilib.tunable.TunableDouble;
+import org.wpilib.tunable.Tunables;
 import org.wpilib.util.Alert;
 import org.wpilib.util.Alert.Level;
 import org.wpilib.command2.SubsystemBase;
@@ -29,6 +31,7 @@ public class FieldVision extends SubsystemBase {
   private final FieldVisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
+  private final TunableDouble m_linearStdDevBaseline = Tunables.addDouble("Vision/Linear StdDev Baseline", FieldVisionConstants.linearStdDevBaseline);
 
   public FieldVision(VisionConsumer consumer, FieldVisionIO... io) {
     this.consumer = consumer;
@@ -121,7 +124,7 @@ public class FieldVision extends SubsystemBase {
         // Calculate standard deviations
         double stdDevFactor =
             Math.pow(observation.averageTagDistance(), 2.0) / observation.tagCount();
-        double linearStdDev = linearStdDevBaseline * stdDevFactor;
+        double linearStdDev = m_linearStdDevBaseline.get() * stdDevFactor;
         double angularStdDev = angularStdDevBaseline * stdDevFactor;
         if (observation.type() == PoseObservationType.MEGATAG_2) {
           linearStdDev *= linearStdDevMegatag2Factor;
@@ -131,6 +134,8 @@ public class FieldVision extends SubsystemBase {
           linearStdDev *= cameraStdDevFactors[cameraIndex];
           angularStdDev *= cameraStdDevFactors[cameraIndex];
         }
+
+        Logger.recordOutput("VisionDebug/LinearStdDev", linearStdDev);
 
         // Send vision observation
         consumer.accept(

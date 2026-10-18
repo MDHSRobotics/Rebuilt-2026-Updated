@@ -206,6 +206,8 @@ private Trigger m_intakes =
      Tunables.publish("Intake Smoke Test", buildSubsystemTestSequence(0));
      Tunables.publish("Hopper Smoke Test", buildSubsystemTestSequence(1));
      Tunables.publish("Shooter Smoke Test", buildSubsystemTestSequence(2));
+     Tunables.publish("Offset Robot Pose +0.5m", Commands.runOnce(this::offsetRobotPose).ignoringDisable(true)
+);
     }
 
   // Named Commands for Autonomous
@@ -538,6 +540,23 @@ private Trigger m_intakes =
   public void changeTestRpm(double val) {
     m_testShooterRPM += val;
   }
+
+  /** This is used for debugging to make sure that the vision pose is
+   *  being applied correctly to the robot pose. It offsets the robot pose by 0.5 meters in the X direction.
+   *  This is useful for testing the vision fusion and making sure that the robot pose is being updated correctly.
+   *  This is only used for debugging and should not be used in competition.
+   */
+  private void offsetRobotPose() {
+    Pose2d currentPose = m_drivetrain.getState().Pose;
+
+    Pose2d offsetPose = new Pose2d(
+        currentPose.getX() + 0.5,
+        currentPose.getY(),
+        currentPose.getRotation()
+    );
+
+    m_drivetrain.resetPose(offsetPose);
+}
 
   /** Update dashboard outputs. */
 public void updateDashboardOutputs() {
