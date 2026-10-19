@@ -46,6 +46,8 @@ public class FieldVisionConstants {
                 0.0, -Math.toRadians(Constants.VisionConstants.FRONT_LIMELIGHT_PITCH), 0.0)))
   };
 
+  public final static int FRONT_CAMERA_INDEX = 0;
+
   // The following is a definition of all cameras on a test harness used to testing
   // vision hardware-in-the-loop in simulation mode.
   public static CameraSpec[] hardwareInLoopCameras = {};

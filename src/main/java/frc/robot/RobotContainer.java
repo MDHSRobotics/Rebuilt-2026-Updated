@@ -25,6 +25,7 @@ import org.wpilib.command2.button.CommandXboxController;
 import org.wpilib.command2.button.RobotModeTriggers;
 import org.wpilib.command2.button.Trigger;
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.Mode;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.commands.AimingCommand;
@@ -46,11 +47,13 @@ import frc.robot.subsystems.vision.FieldVisionIOLimelight;
 import frc.robot.subsystems.vision.FieldVisionIOPhotonVision;
 import frc.robot.subsystems.vision.FieldVisionIOPhotonVisionSim;
 import frc.robot.subsystems.vision.FieldVisionIOReplayable;
+import frc.robot.util.Aiming;
 import frc.robot.util.DynamicAutoCreator;
 import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.DoubleSupplier;
 
 public class RobotContainer {
   // Robot Speed from 0% to 100%
@@ -59,11 +62,31 @@ public class RobotContainer {
   private double m_testShooterRPM = 2500;
   private boolean m_isLocked = false;
 
-  private final Shooter m_shooter = new Shooter();
+  // Create the drivetrain subsystem
+  private final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
+
+  // Get the list of cameras on the robot for field orientation and create Vision subsystem
+  List<FieldVisionIO> fieldVisionCameras = createFieldVisionIOList(FieldVisionConstants.robotCameras);
+  private FieldVision m_fieldVision = new FieldVision(
+        m_drivetrain::addVisionMeasurement, 
+        fieldVisionCameras.toArray(FieldVisionIO[]::new));
+
+  // Create the shooter subsystem with a distance supplier that calculates the distance to the target using the FieldVision subsystem
+  private final DoubleSupplier m_shooterDistanceSupplier = () -> {
+        if (!m_fieldVision.hasTarget(FieldVisionConstants.FRONT_CAMERA_INDEX)) {
+            return Double.NaN;
+        }
+        return Aiming.calculateTagDistance(
+            VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE_INCHES,
+            FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG,
+            VisionConstants.LIMELIGHT_MOUNT_ANGLE,
+            m_fieldVision.getTargetY(FieldVisionConstants.FRONT_CAMERA_INDEX).getDegrees());
+    };
+  private final Shooter m_shooter = new Shooter(m_shooterDistanceSupplier);
+
+  // Create the intake and hopper subsystems
   private final Intake m_intake = new Intake();
   private final Hopper m_hopper = new Hopper();
-  private final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
-  private FieldVision m_fieldVision;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric m_drive =
@@ -108,17 +131,10 @@ private Trigger m_shoot =
 private Trigger m_intakes =
     new Trigger(() -> m_driverController.getL2() > 0.5);
 
-
   // Power Distribution Hub
   // public EnergyMonitor energyMonitor = new EnergyMonitor();
 
   public RobotContainer() {
-
-    // Get the list of cameras on the robot for field orientation
-    List<FieldVisionIO> fieldVisionCameras = createFieldVisionIOList(FieldVisionConstants.robotCameras);
-    m_fieldVision = new FieldVision(
-            m_drivetrain::addVisionMeasurement, 
-            fieldVisionCameras.toArray(FieldVisionIO[]::new));
 
     setDefaultCommands();
     configureDriverControllers();
@@ -233,8 +249,11 @@ private Trigger m_intakes =
                         .withVelocityX(0)
                         .withVelocityY(0)
                         .withRotationalRate(
-                            m_shooter.getYawRotationalRate()
-                                * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
+                            (m_fieldVision.hasTarget(FieldVisionConstants.FRONT_CAMERA_INDEX)
+                                ? m_shooter.getYawRotationalRate(
+                                    m_fieldVision.getTargetX(FieldVisionConstants.FRONT_CAMERA_INDEX).getDegrees())
+                                : 0.0)
+                            * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
             .withTimeout(2));
 
   }
@@ -357,8 +376,11 @@ private Trigger m_intakes =
                             .withVelocityX(getVelocityX())
                             .withVelocityY(getVelocityY())
                             .withRotationalRate(
-                                m_shooter.getYawRotationalRate()
-                                    * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
+                                (m_fieldVision.hasTarget(FieldVisionConstants.FRONT_CAMERA_INDEX)
+                                    ? m_shooter.getYawRotationalRate(
+                                        m_fieldVision.getTargetX(FieldVisionConstants.FRONT_CAMERA_INDEX).getDegrees())
+                                    : 0.0)
+                                * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
                 .until(m_autoAlignCanceled));
     m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
     m_autoAlignCanceled.onTrue(Commands.runOnce(() -> m_isLocked = false));
