@@ -96,7 +96,7 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
   @Override
   public void updateInputs(VisionIOInputs inputs) {
 
-boolean enabled = RobotState.isEnabled();
+    boolean enabled = RobotState.isEnabled();
 
     // Reduce the heat of the Limelight when the robot is disabled,
     // and restore full processing when enabled.
@@ -124,6 +124,8 @@ boolean enabled = RobotState.isEnabled();
     }
 
     inputs.connected = (currentTime - lastHeartbeatTime) < CONNECTION_TIMEOUT;
+
+    inputs.hasTarget = limelight.hasTarget(); 
 
     // Update target observation
     inputs.latestTargetObservation =

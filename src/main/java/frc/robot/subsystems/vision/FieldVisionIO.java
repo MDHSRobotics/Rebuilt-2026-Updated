@@ -15,6 +15,7 @@ public interface FieldVisionIO {
   @AutoLog
   public static class VisionIOInputs {
     public boolean connected = false;
+    public boolean hasTarget = false;
     public TargetObservation latestTargetObservation =
         new TargetObservation(Rotation2d.ZERO, Rotation2d.ZERO);
     public PoseObservation[] poseObservations = new PoseObservation[0];

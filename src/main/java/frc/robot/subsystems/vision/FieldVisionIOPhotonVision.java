@@ -48,6 +48,7 @@ public class FieldVisionIOPhotonVision implements FieldVisionIO {
     // Read new camera observations
     Set<Short> tagIds = new HashSet<>();
     List<PoseObservation> poseObservations = new LinkedList<>();
+
     for (var result : camera.getAllUnreadResults()) {
       // Update latest target observation
       if (result.hasTargets()) {
@@ -55,8 +56,10 @@ public class FieldVisionIOPhotonVision implements FieldVisionIO {
             new TargetObservation(
                 Rotation2d.fromDegrees(result.getBestTarget().getYaw()),
                 Rotation2d.fromDegrees(result.getBestTarget().getPitch()));
+        inputs.hasTarget = true;
       } else {
         inputs.latestTargetObservation = new TargetObservation(Rotation2d.ZERO, Rotation2d.ZERO);
+        inputs.hasTarget = false;
       }
 
       // Add pose observation
