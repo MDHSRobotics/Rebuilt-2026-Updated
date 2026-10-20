@@ -45,7 +45,8 @@ public class Shooter extends SubsystemBase implements Testable {
           EncoderType.RELATIVE,
           LoggedValue.VELOCITY,
           LoggedValue.CURRENT,
-          LoggedValue.OUTPUT_VOLTAGE);
+          LoggedValue.OUTPUT_VOLTAGE,
+          LoggedValue.APPLIED_OUTPUT);
   private final LoggableSparkFlex m_shooterRightMotor =
       new LoggableSparkFlex(
           BusConstants.SHOOTER_BUS,
