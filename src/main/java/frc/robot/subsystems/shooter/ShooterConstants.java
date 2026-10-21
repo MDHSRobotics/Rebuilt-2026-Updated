@@ -16,7 +16,7 @@ public class ShooterConstants extends SubsystemBase {
   public static final int CURRENT_LIMIT = 80;
 
   /* Shooter Motors PID Constants */
-  public static final double K_P_SHOOTER = 0.004;
+  public static final double K_P_SHOOTER = 0.010;
   public static final double K_I_SHOOTER = 0.00000;
   public static final double K_D_SHOOTER = 0.00001;
 

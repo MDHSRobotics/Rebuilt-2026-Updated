@@ -47,7 +47,8 @@ public class LoggableSparkFlex extends SparkFlex {
     POSITION, // current + target position (rotations)
     CURRENT, // output current (amps)
     TEMPERATURE, // motor temperature (°C)
-    OUTPUT_VOLTAGE // applied output * bus voltage
+    OUTPUT_VOLTAGE,
+    APPLIED_OUTPUT // applied output * bus voltage
   }
 
   /** Whether to use the built-in relative encoder or an attached absolute encoder. */
@@ -210,6 +211,9 @@ public class LoggableSparkFlex extends SparkFlex {
     }
     if (logs(LoggedValue.OUTPUT_VOLTAGE)) {
       m_table.log("Output Voltage", getBusVoltage().get(0.) * getAppliedOutput().get(0.));
+    }
+    if (logs(LoggedValue.APPLIED_OUTPUT)) {
+      m_table.log("Applied Output", getAppliedOutput().get());
     }
   }
 
