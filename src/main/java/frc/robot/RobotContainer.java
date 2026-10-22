@@ -24,6 +24,8 @@ import org.wpilib.command2.button.CommandDualShock4Controller;
 import org.wpilib.command2.button.CommandXboxController;
 import org.wpilib.command2.button.RobotModeTriggers;
 import org.wpilib.command2.button.Trigger;
+import org.wpilib.command2.sysid.SysIdRoutine;
+
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.commands.AimingCommand;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
@@ -363,6 +365,13 @@ private Trigger m_intakes =
         .onTrue(
             new InstantCommand(
                 () -> m_shooter.changeTrim(-100)));
+
+    // Shooter SYSID
+    m_operatorController.a().whileTrue(
+        m_shooter.sysIdQuasistatic(SysIdRoutine.Direction.FORWARD));
+
+    m_operatorController.b().whileTrue(
+        m_shooter.sysIdDynamic(SysIdRoutine.Direction.FORWARD));
 
   }
 

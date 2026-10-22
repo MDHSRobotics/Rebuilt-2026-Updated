@@ -204,13 +204,14 @@ public class LoggableSparkFlex extends SparkFlex {
       m_table.log("Target Position", targetPosition);
     }
     if (logs(LoggedValue.CURRENT)) {
-      m_table.log("Output Current", getOutputCurrent().get(0.));
+      m_table.log("Output Current", getOutputCurrent().get());
     }
     if (logs(LoggedValue.TEMPERATURE)) {
-      m_table.log("Temperature", getMotorTemperature().get(0.));
+      m_table.log("Temperature", getMotorTemperature().get());
     }
     if (logs(LoggedValue.OUTPUT_VOLTAGE)) {
-      m_table.log("Output Voltage", getBusVoltage().get(0.) * getAppliedOutput().get(0.));
+      m_table.log("Output Voltage", getBusVoltage().get() * getAppliedOutput().get());
+      m_table.log("Bus Voltage", getBusVoltage().get());
     }
     if (logs(LoggedValue.APPLIED_OUTPUT)) {
       m_table.log("Applied Output", getAppliedOutput().get());

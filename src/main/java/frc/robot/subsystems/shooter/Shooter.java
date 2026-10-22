@@ -28,6 +28,12 @@ import frc.robot.util.logging.LoggableSparkFlex.EncoderType;
 import frc.robot.util.logging.LoggableSparkFlex.LoggedValue;
 import frc.robot.util.logging.LoggedTunableNumber;
 
+import org.wpilib.command2.sysid.SysIdRoutine;
+
+import static org.wpilib.units.Units.Rotations;
+import static org.wpilib.units.Units.RotationsPerSecond;
+import static org.wpilib.units.Units.Volts;
+
 public class Shooter extends SubsystemBase implements Testable {
 
   private final TelemetryTable m_shooterTelemetry = Telemetry.getTable("Shooter");
@@ -82,6 +88,31 @@ public class Shooter extends SubsystemBase implements Testable {
 
   private PolynomialInterpolation polynomial =
       new PolynomialInterpolation(ShooterConstants.DISTANCES, ShooterConstants.RPMS);
+
+
+  private final SysIdRoutine m_shooterSysId = new SysIdRoutine(
+    new SysIdRoutine.Config(
+        null,
+        Volts.of(4),
+        null
+    ),
+    new SysIdRoutine.Mechanism(
+        // Direct voltage control; bypasses the normal velocity reference.
+        voltage -> m_shooterLeftMotor.setVoltage(voltage.in(Volts)),
+
+        // Log the motor's voltage, position, and velocity.
+        log -> log.motor("shooter")
+            .voltage(Volts.of(
+                m_shooterLeftMotor.getAppliedOutput().get()
+                    * m_shooterLeftMotor.getBusVoltage().get()))
+            .angularPosition(Rotations.of(
+                m_shooterLeftMotor.getEncoder().getPosition().get()))
+            .angularVelocity(RotationsPerSecond.of(
+                m_shooterLeftMotor.getEncoder().getVelocity().get() / 60.0)),
+
+        this
+    )
+  );
 
   public Shooter() {
 
@@ -231,5 +262,14 @@ public class Shooter extends SubsystemBase implements Testable {
     m_kickerMotor.resetTestResult();
     m_shooterLeftMotor.resetTestResult();
     m_shooterRightMotor.resetTestResult();
+  }
+
+  // Shooter SYSID
+  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+      return m_shooterSysId.quasistatic(direction);
+  }
+
+  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+      return m_shooterSysId.dynamic(direction);
   }
 }
