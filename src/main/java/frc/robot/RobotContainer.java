@@ -95,7 +95,7 @@ private final CommandXboxController m_operatorController =
 private Trigger m_autoAlignCanceled =
     new Trigger(() -> Math.abs(m_driverController.getRightX()) > 0.1);
 private Trigger m_shoot =
-    new Trigger(() -> m_driverController.getR2() > 0.5);
+    new Trigger(() -> m_operatorController.getRightTrigger() > 0.5);
 private Trigger m_intakes =
     new Trigger(() -> m_driverController.getL2() > 0.5);
 
@@ -274,8 +274,7 @@ private Trigger m_intakes =
 
 
     // Lock on to hub: Triangle
-    m_driverController
-        .triangle()
+    m_operatorController.y()
         .toggleOnTrue(
             m_drivetrain
                 .applyRequest(
@@ -339,19 +338,19 @@ private Trigger m_intakes =
                     () -> m_hopper.runHopper(HopperPowers.SHOOT),
                     m_hopper)));
 
-    m_operatorController
-        .leftTrigger()
-        .whileTrue(
-            Commands.run(
-                () -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE),
-                m_hopper));
+    // m_operatorController
+    //     .leftTrigger()
+    //     .whileTrue(
+    //         Commands.run(
+    //             () -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE),
+    //             m_hopper));
 
-    m_operatorController
-        .rightTrigger()
-        .whileTrue(
-            Commands.run(
-                () -> m_hopper.runHopper(HopperPowers.INTAKE),
-                m_hopper));
+    // m_operatorController
+    //     .rightTrigger()
+    //     .whileTrue(
+    //         Commands.run(
+    //             () -> m_hopper.runHopper(HopperPowers.INTAKE),
+    //             m_hopper));
 
     // Change Shooter Trim
     m_operatorController

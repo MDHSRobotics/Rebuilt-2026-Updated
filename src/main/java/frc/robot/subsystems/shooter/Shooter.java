@@ -81,7 +81,7 @@ public class Shooter extends SubsystemBase implements Testable {
   private double m_currentDistance = 0;
   private double m_lastDistance = 0;
 
-  private double m_shooterTrim = 25;
+  private double m_shooterTrim = -25;
   private boolean m_tagIsSeen = false;
 
   SparkFlexConfig shooterLeftMotorConfig;
@@ -133,10 +133,7 @@ public class Shooter extends SubsystemBase implements Testable {
     shooterRightMotorConfig
         .smartCurrentLimit(ShooterConstants.CURRENT_LIMIT)
         .idleMode(IdleMode.kCoast)
-        .inverted(true)
-        .closedLoop
-        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .pid(kP.get(), kI.get(), kD.get());
+        .follow(ShooterConstants.SHOOTER_LEFT_MOTOR_ID, true);
     m_shooterRightMotor.configure(
         shooterRightMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
