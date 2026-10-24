@@ -115,8 +115,6 @@ public class Shooter extends SubsystemBase implements Testable {
     )
   );
 
-  public Shooter() {
-
   public Shooter(DoubleSupplier distanceSupplier) {
     m_distanceSupplier = distanceSupplier;  
 
