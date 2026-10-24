@@ -27,6 +27,9 @@ import org.wpilib.command2.button.Trigger;
 import org.wpilib.command2.sysid.SysIdRoutine;
 
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.Mode;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.commands.AimingCommand;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -38,11 +41,21 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
+import frc.robot.subsystems.vision.CameraSpec;
+import frc.robot.subsystems.vision.FieldVision;
+import frc.robot.subsystems.vision.FieldVisionConstants;
+import frc.robot.subsystems.vision.FieldVisionIO;
+import frc.robot.subsystems.vision.FieldVisionIOLimelight;
+import frc.robot.subsystems.vision.FieldVisionIOPhotonVision;
+import frc.robot.subsystems.vision.FieldVisionIOPhotonVisionSim;
+import frc.robot.subsystems.vision.FieldVisionIOReplayable;
+import frc.robot.util.Aiming;
 import frc.robot.util.DynamicAutoCreator;
 import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.DoubleSupplier;
 
 public class RobotContainer {
   // Robot Speed from 0% to 100%
@@ -51,10 +64,31 @@ public class RobotContainer {
   private double m_testShooterRPM = 2500;
   private boolean m_isLocked = false;
 
-  private final Shooter m_shooter = new Shooter();
+  // Create the drivetrain subsystem
+  private final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
+
+  // Get the list of cameras on the robot for field orientation and create Vision subsystem
+  List<FieldVisionIO> fieldVisionCameras = createFieldVisionIOList(FieldVisionConstants.robotCameras);
+  private FieldVision m_fieldVision = new FieldVision(
+        m_drivetrain::addVisionMeasurement, 
+        fieldVisionCameras.toArray(FieldVisionIO[]::new));
+
+  // Create the shooter subsystem with a distance supplier that calculates the distance to the target using the FieldVision subsystem
+  private final DoubleSupplier m_shooterDistanceSupplier = () -> {
+        if (!m_fieldVision.hasTarget(FieldVisionConstants.FRONT_CAMERA_INDEX)) {
+            return Double.NaN;
+        }
+        return Aiming.calculateTagDistance(
+            VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE_INCHES,
+            FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG,
+            VisionConstants.LIMELIGHT_MOUNT_ANGLE,
+            m_fieldVision.getTargetY(FieldVisionConstants.FRONT_CAMERA_INDEX).getDegrees());
+    };
+  private final Shooter m_shooter = new Shooter(m_shooterDistanceSupplier);
+
+  // Create the intake and hopper subsystems
   private final Intake m_intake = new Intake();
   private final Hopper m_hopper = new Hopper();
-  private final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric m_drive =
@@ -99,11 +133,11 @@ private Trigger m_shoot =
 private Trigger m_intakes =
     new Trigger(() -> m_driverController.getL2() > 0.5);
 
-
   // Power Distribution Hub
   // public EnergyMonitor energyMonitor = new EnergyMonitor();
 
   public RobotContainer() {
+
     setDefaultCommands();
     configureDriverControllers();
     configureOperatorControllers();
@@ -115,6 +149,61 @@ private Trigger m_intakes =
   public CommandSwerveDrivetrain getDrivetrain() {
     return m_drivetrain;
   } 
+
+  /** 
+   * Return a list of "cameras" based on the input cameraSpecArray. 
+   * The list will contain either real cameras, simulated cameras, 
+   * or replayable cameras depending on the current mode.
+   */
+  private List<FieldVisionIO> createFieldVisionIOList(CameraSpec[] cameraSpecArray) {
+
+    Boolean inPureSimulation = (Constants.currentMode == Mode.SIM) && !FieldVisionConstants.hardwareInTheLoop;
+
+        List<FieldVisionIO> fieldVisionIoList = new ArrayList<>();
+        for (int i = 0; i < cameraSpecArray.length; i++) {
+
+            if (Constants.currentMode == Mode.REPLAY) {
+                // Replaying a log file so create a dummy camera with the proper name
+                fieldVisionIoList.add(new FieldVisionIOReplayable(cameraSpecArray[i].cameraName));
+
+            } else if (inPureSimulation) {
+                // In pure simulation mode (i.e., without any hardware in the loop), always use
+                // PhotonVisionSim
+                // even if this is a Limelight because we cannot simulate Limelights
+                fieldVisionIoList.add(
+                    new FieldVisionIOPhotonVisionSim(
+                        cameraSpecArray[i].cameraName,
+                        cameraSpecArray[i].robotToCamera,
+                        () -> m_drivetrain.getState().Pose));
+            } else {
+                // We are either running with a real robot or in simulation mode with vision hardware in the
+                // loop so instatiate the real device (Limelight or PhotonVision) based on the camera type
+                switch (cameraSpecArray[i].visionType) {
+                case LIMELIGHT:
+                    fieldVisionIoList.add(
+                        new FieldVisionIOLimelight(cameraSpecArray[i].cameraName,
+                            cameraSpecArray[i].robotToCamera,
+                            () -> m_drivetrain.getState().Pose.getRotation()));
+                    break;
+
+                case PHOTONVISION:
+                    fieldVisionIoList.add(
+                        new FieldVisionIOPhotonVision(
+                            cameraSpecArray[i].cameraName, cameraSpecArray[i].robotToCamera));
+                    break;
+
+                default:
+                    throw new IllegalArgumentException(
+                        "Unknown vision type "
+                            + cameraSpecArray[i].visionType
+                            + " for camera "
+                            + cameraSpecArray[i].cameraName);
+                }
+            }
+        }
+
+        return fieldVisionIoList;
+    }
 
   /* Define the possible auto command options that can be chosen from the dashboard.
    * This includes:
@@ -133,6 +222,8 @@ private Trigger m_intakes =
      Tunables.publish("Intake Smoke Test", buildSubsystemTestSequence(0));
      Tunables.publish("Hopper Smoke Test", buildSubsystemTestSequence(1));
      Tunables.publish("Shooter Smoke Test", buildSubsystemTestSequence(2));
+     Tunables.publish("Offset Robot Pose +0.5m", Commands.runOnce(this::offsetRobotPose).ignoringDisable(true)
+);
     }
 
   // Named Commands for Autonomous
@@ -160,8 +251,11 @@ private Trigger m_intakes =
                         .withVelocityX(0)
                         .withVelocityY(0)
                         .withRotationalRate(
-                            m_shooter.getYawRotationalRate()
-                                * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
+                            (m_fieldVision.hasTarget(FieldVisionConstants.FRONT_CAMERA_INDEX)
+                                ? m_shooter.getYawRotationalRate(
+                                    m_fieldVision.getTargetX(FieldVisionConstants.FRONT_CAMERA_INDEX).getDegrees())
+                                : 0.0)
+                            * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
             .withTimeout(2));
 
   }
@@ -227,7 +321,7 @@ private Trigger m_intakes =
     // Shoot Ball: Triangle
     m_shoot.whileTrue(
             new SequentialCommandGroup(
-                Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2),
+                Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(1),
                 new ParallelCommandGroup(
                     Commands.run(() -> m_shooter.shootBall(), m_shooter),
                     Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
@@ -283,8 +377,11 @@ private Trigger m_intakes =
                             .withVelocityX(getVelocityX())
                             .withVelocityY(getVelocityY())
                             .withRotationalRate(
-                                m_shooter.getYawRotationalRate()
-                                    * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
+                                (m_fieldVision.hasTarget(FieldVisionConstants.FRONT_CAMERA_INDEX)
+                                    ? m_shooter.getYawRotationalRate(
+                                        m_fieldVision.getTargetX(FieldVisionConstants.FRONT_CAMERA_INDEX).getDegrees())
+                                    : 0.0)
+                                * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
                 .until(m_autoAlignCanceled));
     m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
     m_autoAlignCanceled.onTrue(Commands.runOnce(() -> m_isLocked = false));
@@ -366,11 +463,11 @@ private Trigger m_intakes =
                 () -> m_shooter.changeTrim(-100)));
 
     // Shooter SYSID
-    m_operatorController.a().whileTrue(
-        m_shooter.sysIdQuasistatic(SysIdRoutine.Direction.FORWARD));
+    // m_operatorController.a().whileTrue(
+    //     m_shooter.sysIdQuasistatic(SysIdRoutine.Direction.FORWARD));
 
-    m_operatorController.b().whileTrue(
-        m_shooter.sysIdDynamic(SysIdRoutine.Direction.FORWARD));
+    // m_operatorController.b().whileTrue(
+    //     m_shooter.sysIdDynamic(SysIdRoutine.Direction.FORWARD));
 
   }
 
@@ -465,6 +562,23 @@ private Trigger m_intakes =
   public void changeTestRpm(double val) {
     m_testShooterRPM += val;
   }
+
+  /** This is used for debugging to make sure that the vision pose is
+   *  being applied correctly to the robot pose. It offsets the robot pose by 0.5 meters in the X direction.
+   *  This is useful for testing the vision fusion and making sure that the robot pose is being updated correctly.
+   *  This is only used for debugging and should not be used in competition.
+   */
+  private void offsetRobotPose() {
+    Pose2d currentPose = m_drivetrain.getState().Pose;
+
+    Pose2d offsetPose = new Pose2d(
+        currentPose.getX() + 0.5,
+        currentPose.getY(),
+        currentPose.getRotation()
+    );
+
+    m_drivetrain.resetPose(offsetPose);
+}
 
   /** Update dashboard outputs. */
 public void updateDashboardOutputs() {

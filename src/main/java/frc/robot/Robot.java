@@ -4,6 +4,13 @@
 
 package frc.robot;
 
+import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGReader;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+
 import static org.wpilib.units.Units.Meters;
 
 import java.io.IOException;
@@ -23,6 +30,7 @@ import org.wpilib.networktables.NetworkTablesJNI;
 import org.wpilib.simulation.DriverStationSim;
 import org.wpilib.system.DataLogManager;
 import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
 //import org.wpilib.driverstation.RobotState;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.driverstation.DriverStation;
@@ -30,28 +38,23 @@ import org.wpilib.driverstation.DriverStation;
 //import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.system.Filesystem;
 import org.wpilib.framework.RobotBase;
-import org.wpilib.framework.TimedRobot;
 import org.wpilib.system.Tracer;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.CommandScheduler;
-import frc.robot.Constants.VisionConstants;
 //SYSTEMCORE import frc.robot.util.Elastic;
-import com.limelightvision.Limelight;
 import com.revrobotics.util.StatusLogger;
-import com.limelightvision.IMUMode;
 
 import frc.robot.util.logging.EpochLogger;
 import frc.robot.util.logging.LoggableSparkFlex;
 //SYSTEMCORE import org.littletonrobotics.urcl.URCL;
 
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
+  
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
   private DoublePublisher m_matchTimePub;
   private boolean m_hasAppliedRobotRotation;
-
-  private Limelight m_frontLimelight;
 
   private final Tracer m_tracer = new Tracer();
   private final EpochLogger epochLogger = new EpochLogger(m_tracer);
@@ -62,32 +65,52 @@ public class Robot extends TimedRobot {
 
   public Robot() {
 
+    // Record metadata
+    Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
+    Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
+    Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
+    Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
+    Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
+    Logger.recordMetadata(
+        "GitDirty",
+        switch (BuildConstants.DIRTY) {
+          case 0 -> "All changes committed";
+          case 1 -> "Uncommitted changes";
+          default -> "Unknown";
+        });
+
+    // Set up data receivers & replay source
+    switch (Constants.currentMode) {
+      case REAL:
+        // Running on a real robot, log to a USB stick ("/U/logs")
+        Logger.addDataReceiver(new WPILOGWriter());
+        Logger.addDataReceiver(new NT4Publisher());
+        break;
+
+      case SIM:
+        // Running a physics simulator, log to NT
+        Logger.addDataReceiver(new NT4Publisher());
+        break;
+
+      case REPLAY:
+        // Replaying a log, set up replay source
+        setUseTiming(false); // Run as fast as possible
+        String logPath = LogFileUtil.findReplayLog();
+        Logger.setReplaySource(new WPILOGReader(logPath));
+        Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+        break;
+    }
+
+    // Start AdvantageKit logger
+    Logger.start();
+
+
     if (RobotBase.isSimulation()) {
         DriverStationSim.setAllianceStationId(Constants.SIMULATION_ALLIANCE_STATION_ID);
         DriverStationSim.notifyNewData();
     }
 
     m_matchTimePub = NetworkTableInstance.getDefault().getDoubleTopic("Match Time").publish();
-
-    m_frontLimelight = new Limelight(VisionConstants.FRONT_LIMELIGHT_NAME);
-    // Use shared robot orientation for MegaTag2
-    m_frontLimelight.setUseSharedOrientation(true);
-
-    // Configure Limelight Positions
-    m_frontLimelight.setCameraPose_RobotSpaceOverride(
-        VisionConstants.FRONT_LIMELIGHT_FORWARD_DISTANCE,
-        0.,
-        VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
-        0.,
-        VisionConstants.FRONT_LIMELIGHT_PITCH,
-        0.,
-        true);
-
-    //SYSTEMCORE: The previous setimumode call passed in a value of 1 (external IMU, seed internal IMU?)
-    m_frontLimelight.setIMUMode(IMUMode.EXTERNAL_SEED_INTERNAL);
-
-    m_frontLimelight.setThrottle(200);
-    // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
 
     //  LOGGING SETUP
     StatusLogger.disableAutoLogging();
@@ -136,6 +159,35 @@ public class Robot extends TimedRobot {
     epochLogger.start();
   }
 
+  /** 
+   *  This method logs a comparison of the NetworkTables and CTRE clocks
+   *  It is used to verify that the clocks are in sync and that the time epoch is correct 
+   *  for vision measurements.
+   * 
+   *  How to interpret the results:
+   *    - The offset should be near zero, and the read window should be small (less than 1ms)
+   *      Offset consistently within that uncertainty: no measurable clock difference.
+   *    - Stable offset clearly outside it: evidence of different epochs.
+   *    - Spikes accompanying wider read windows: likely scheduling jitter
+   *
+   */
+  private void logClockComparison() {
+    long ntBefore = NetworkTablesJNI.now();
+    double ctreSeconds = Utils.getCurrentTimeSeconds();
+    long ntAfter = NetworkTablesJNI.now();
+
+    double ntMidpointSeconds =
+        ntBefore * 1e-9 + (ntAfter - ntBefore) * 0.5e-9;
+
+    Logger.recordOutput(
+        "ClockDiagnostic/CtreMinusNtSeconds",
+        ctreSeconds - ntMidpointSeconds);
+
+    Logger.recordOutput(
+        "ClockDiagnostic/ReadWindowSeconds",
+        (ntAfter - ntBefore) * 1e-9);
+  }
+
   @Override
   public void robotPeriodic() {
     // m_timeAndJoystickReplay.update();
@@ -149,15 +201,13 @@ public class Robot extends TimedRobot {
     m_robotContainer.updateDashboardOutputs();
     m_tracer.addEpoch("Smart Dashboard");
     epochLogger.update();
-    
-    // Feed the robot orientation into the MegaTag2 system for vision processing
-    Limelight.setSharedRobotOrientation(
-        m_robotContainer
-            .getDrivetrain()
-            .getState()
-            .Pose
-            .getRotation()
-            .getDegrees());
+
+    // Log the clock comparison for diagnostic purposes
+    // This is only done in disabled mode to avoid adding extra load during active robot operation
+    // It's really not very expensive, but we want to be careful about adding extra load during active robot operation
+    if (RobotState.isDisabled()) {
+      logClockComparison();
+    }
   }
 
   @Override
@@ -175,8 +225,6 @@ public class Robot extends TimedRobot {
         m_hasAppliedRobotRotation = true;
       }
     }
-    //SYSTEMCORE: The previous setimumode call passed in a value of 1 (external IMU, seed internal IMU)
-    m_frontLimelight.setIMUMode(IMUMode.EXTERNAL_SEED_INTERNAL);
   }
 
   @Override
@@ -191,29 +239,19 @@ public class Robot extends TimedRobot {
       System.out.println("Starting Auto: " + autoCommandName);
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
-
-    //SYSTEMCORE: The previous setimumode call passed in a value of 4 (internal IMU assisted by external IMU?)
-    m_frontLimelight.setIMUMode(IMUMode.INTERNAL_EXTERNAL_ASSIST);
-
-    m_frontLimelight.setThrottle(0);
   }
 
   @Override
   public void autonomousPeriodic() {}
 
   @Override
-  public void autonomousExit() {
-    m_frontLimelight.setThrottle(200);
-  }
+  public void autonomousExit() {}
 
   @Override
   public void teleopInit() {
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().cancel(m_autonomousCommand);
     }
-
-    m_frontLimelight.setIMUMode(IMUMode.INTERNAL_EXTERNAL_ASSIST);
-    m_frontLimelight.setThrottle(0);
 
     //SYSTEMCORE Elastic.selectTab("Teleoperated");
   }
@@ -228,10 +266,6 @@ public class Robot extends TimedRobot {
   public void utilityInit() {
     CommandScheduler.getInstance().cancelAll();
 
-
-    m_frontLimelight.setIMUMode(IMUMode.INTERNAL_EXTERNAL_ASSIST);
-    m_frontLimelight.setThrottle(0);
-
     m_robotContainer.resetFieldPosition(
         new Pose2d(Meters.of(0), Meters.of(0), Rotation2d.fromDegrees(180)));
   }
@@ -240,13 +274,7 @@ public class Robot extends TimedRobot {
   public void utilityPeriodic() {}
 
   @Override
-  public void utilityExit() {
-    SignalLogger.stop();
-
-    m_frontLimelight.setIMUMode(IMUMode.EXTERNAL_SEED_INTERNAL);
-    m_frontLimelight.setThrottle(200);
-
-  }
+  public void utilityExit() {}
 
   @Override
   public void simulationPeriodic() {}

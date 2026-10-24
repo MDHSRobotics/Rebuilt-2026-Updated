@@ -2,7 +2,8 @@ package frc.robot.subsystems.shooter;
 
 import static frc.robot.util.EpsilonEquals.epsilonEquals;
 
-import com.limelightvision.Limelight;
+import java.util.function.DoubleSupplier;
+
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.FeedbackSensor;
@@ -18,8 +19,6 @@ import org.wpilib.command2.WaitCommand;
 
 import frc.robot.Constants;
 import frc.robot.Constants.BusConstants;
-import frc.robot.Constants.FieldConstants;
-import frc.robot.Constants.VisionConstants;
 import frc.robot.util.Aiming;
 import frc.robot.util.PolynomialInterpolation;
 import frc.robot.util.Testable;
@@ -27,6 +26,7 @@ import frc.robot.util.logging.LoggableSparkFlex;
 import frc.robot.util.logging.LoggableSparkFlex.EncoderType;
 import frc.robot.util.logging.LoggableSparkFlex.LoggedValue;
 import frc.robot.util.logging.LoggedTunableNumber;
+import java.util.function.DoubleSupplier;
 
 import org.wpilib.command2.sysid.SysIdRoutine;
 
@@ -37,8 +37,6 @@ import static org.wpilib.units.Units.Volts;
 public class Shooter extends SubsystemBase implements Testable {
 
   private final TelemetryTable m_shooterTelemetry = Telemetry.getTable("Shooter");
-
-  private final Limelight m_frontLimelight = new Limelight(Constants.VisionConstants.FRONT_LIMELIGHT_NAME);
 
   /* Spark Flex Motors */
   private final LoggableSparkFlex m_shooterLeftMotor =
@@ -79,9 +77,8 @@ public class Shooter extends SubsystemBase implements Testable {
       new LoggedTunableNumber("Shooter/kD", ShooterConstants.K_D_SHOOTER);
 
   private double m_currentDistance = 0;
-  private double m_lastDistance = 0;
 
-  private double m_shooterTrim = -25;
+  private double m_shooterTrim = -150;
   private boolean m_tagIsSeen = false;
 
   SparkFlexConfig shooterLeftMotorConfig;
@@ -89,6 +86,10 @@ public class Shooter extends SubsystemBase implements Testable {
   private PolynomialInterpolation polynomial =
       new PolynomialInterpolation(ShooterConstants.DISTANCES, ShooterConstants.RPMS);
 
+  /** The supplier for the distance to the target
+   *  This avoids the Shooter subsystem having to know about the FieldVision subsystem, which would create a circular dependency.
+   */
+  private final DoubleSupplier m_distanceSupplier;
 
   private final SysIdRoutine m_shooterSysId = new SysIdRoutine(
     new SysIdRoutine.Config(
@@ -114,7 +115,8 @@ public class Shooter extends SubsystemBase implements Testable {
     )
   );
 
-  public Shooter() {
+  public Shooter(DoubleSupplier distanceSupplier) {
+    m_distanceSupplier = distanceSupplier;  
 
     // Left Motor Configurations
     shooterLeftMotorConfig = new SparkFlexConfig();
@@ -157,18 +159,15 @@ public class Shooter extends SubsystemBase implements Testable {
     // PersistMode.kPersistParameters);
     // }
 
-    m_currentDistance =
-        Aiming.calculateTagDistance(
-            VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE_INCHES,
-            FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG,
-            VisionConstants.LIMELIGHT_MOUNT_ANGLE,
-            m_frontLimelight.getTYDegrees());
-    if (m_frontLimelight.hasTarget()) {
-      m_tagIsSeen = true;
-      m_lastDistance = m_currentDistance;
-    } else {
-      m_tagIsSeen = false;
-      m_currentDistance = m_lastDistance;
+    // Update the current distance to the target using the distance supplier
+    // rather than reading directly from the Limelight or other camera
+    // This returns NaN if the target is not seen, which is handled in the next step.
+    double distance = m_distanceSupplier.getAsDouble();
+
+    m_tagIsSeen = Double.isFinite(distance);
+
+    if (m_tagIsSeen) {
+        m_currentDistance = distance;
     }
 
     m_shooterTelemetry.log("Distance From Robot to AprilTag", m_currentDistance);
@@ -212,8 +211,8 @@ public class Shooter extends SubsystemBase implements Testable {
     m_shooterLeftMotor.setVelocity(rpm);
   }
 
-  public double getYawRotationalRate() {
-    double txAdjusment = Aiming.getYawTxAdjustment(m_frontLimelight.getTXDegrees());
+  public double getYawRotationalRate(double txDegrees) {
+    double txAdjusment = Aiming.getYawTxAdjustment(txDegrees);
     m_shooterTelemetry.log("TX Adjustment", txAdjusment);
     return txAdjusment;
   }
