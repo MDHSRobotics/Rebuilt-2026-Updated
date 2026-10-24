@@ -30,6 +30,7 @@ import org.wpilib.networktables.NetworkTablesJNI;
 import org.wpilib.simulation.DriverStationSim;
 import org.wpilib.system.DataLogManager;
 import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
 //import org.wpilib.driverstation.RobotState;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.driverstation.DriverStation;
@@ -158,6 +159,28 @@ public class Robot extends LoggedRobot {
     epochLogger.start();
   }
 
+  /** This method logs a comparison of the NetworkTables and CTRE clocks
+   *  It is used to verify that the clocks are in sync and that the time epoch is correct 
+   *  for vision measurements.
+   *  The offset should be near zero, and the read window should be small (less than 1ms)
+   */
+  private void logClockComparison() {
+    long ntBefore = NetworkTablesJNI.now();
+    double ctreSeconds = Utils.getCurrentTimeSeconds();
+    long ntAfter = NetworkTablesJNI.now();
+
+    double ntMidpointSeconds =
+        ntBefore * 1e-9 + (ntAfter - ntBefore) * 0.5e-9;
+
+    Logger.recordOutput(
+        "ClockDiagnostic/CtreMinusNtSeconds",
+        ctreSeconds - ntMidpointSeconds);
+
+    Logger.recordOutput(
+        "ClockDiagnostic/ReadWindowSeconds",
+        (ntAfter - ntBefore) * 1e-9);
+  }
+
   @Override
   public void robotPeriodic() {
     // m_timeAndJoystickReplay.update();
@@ -171,6 +194,13 @@ public class Robot extends LoggedRobot {
     m_robotContainer.updateDashboardOutputs();
     m_tracer.addEpoch("Smart Dashboard");
     epochLogger.update();
+
+    // Log the clock comparison for diagnostic purposes
+    // This is only done in disabled mode to avoid adding extra load during active robot operation
+    // It's really not very expensive, but we want to be careful about adding extra load during active robot operation
+    if (RobotState.isDisabled()) {
+      logClockComparison();
+    }
   }
 
   @Override
