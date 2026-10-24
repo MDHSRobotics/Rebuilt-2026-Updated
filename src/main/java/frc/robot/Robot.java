@@ -159,10 +159,17 @@ public class Robot extends LoggedRobot {
     epochLogger.start();
   }
 
-  /** This method logs a comparison of the NetworkTables and CTRE clocks
+  /** 
+   *  This method logs a comparison of the NetworkTables and CTRE clocks
    *  It is used to verify that the clocks are in sync and that the time epoch is correct 
    *  for vision measurements.
-   *  The offset should be near zero, and the read window should be small (less than 1ms)
+   * 
+   *  How to interpret the results:
+   *    - The offset should be near zero, and the read window should be small (less than 1ms)
+   *      Offset consistently within that uncertainty: no measurable clock difference.
+   *    - Stable offset clearly outside it: evidence of different epochs.
+   *    - Spikes accompanying wider read windows: likely scheduling jitter
+   *
    */
   private void logClockComparison() {
     long ntBefore = NetworkTablesJNI.now();
