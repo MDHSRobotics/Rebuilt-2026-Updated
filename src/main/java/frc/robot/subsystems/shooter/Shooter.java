@@ -78,7 +78,7 @@ public class Shooter extends SubsystemBase implements Testable {
 
   private double m_currentDistance = 0;
 
-  private double m_shooterTrim = -25;
+  private double m_shooterTrim = -150;
   private boolean m_tagIsSeen = false;
 
   SparkFlexConfig shooterLeftMotorConfig;

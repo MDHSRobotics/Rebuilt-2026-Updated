@@ -321,7 +321,7 @@ private Trigger m_intakes =
     // Shoot Ball: Triangle
     m_shoot.whileTrue(
             new SequentialCommandGroup(
-                Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2),
+                Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(1),
                 new ParallelCommandGroup(
                     Commands.run(() -> m_shooter.shootBall(), m_shooter),
                     Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
@@ -463,11 +463,11 @@ private Trigger m_intakes =
                 () -> m_shooter.changeTrim(-100)));
 
     // Shooter SYSID
-    m_operatorController.a().whileTrue(
-        m_shooter.sysIdQuasistatic(SysIdRoutine.Direction.FORWARD));
+    // m_operatorController.a().whileTrue(
+    //     m_shooter.sysIdQuasistatic(SysIdRoutine.Direction.FORWARD));
 
-    m_operatorController.b().whileTrue(
-        m_shooter.sysIdDynamic(SysIdRoutine.Direction.FORWARD));
+    // m_operatorController.b().whileTrue(
+    //     m_shooter.sysIdDynamic(SysIdRoutine.Direction.FORWARD));
 
   }
 
