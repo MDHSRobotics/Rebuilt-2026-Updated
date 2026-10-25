@@ -17,7 +17,7 @@ import frc.robot.Constants;
 public class FieldVisionConstants {
 
   /** Are we running a physics simulator, but with a real camera connected. */
-  public static final boolean hardwareInTheLoop = true;
+  public static final boolean hardwareInTheLoop = false;
 
   //            ********** IMPORTANT NOTE ABOUT CAMERA TRANSFORMS ********
   //    Pay attention to the signs of the camera rotation because they are not intuitive,
@@ -62,6 +62,12 @@ public class FieldVisionConstants {
 
   // Standard deviation baselines, for 1 meter distance and 1 tag
   // (Adjusted automatically based on distance and # of tags)
+  // For example a baseline standard deviation of 0.02 meters means that at 1 meter distance,
+  // the expected error in the vision measurement is about 0.02 meters.
+  // These values are passed to addVisionMeasurement to describe 
+  // how uncertain you consider the vision measurement:
+  // Smaller values mean more trust in vision; larger values mean less. 
+  // These are standard deviations, not variances or maximum allowed errors.
   public static double linearStdDevBaseline = 0.02; // Meters
   public static double angularStdDevBaseline = 0.06; // Radians
 

@@ -79,9 +79,9 @@ public class RobotContainer {
             return Double.NaN;
         }
         return Aiming.calculateTagDistance(
-            VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE_INCHES,
+            VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE_INCHES_USED_BY_SHOOTER,
             FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG,
-            VisionConstants.LIMELIGHT_MOUNT_ANGLE,
+            VisionConstants.LIMELIGHT_MOUNT_ANGLE_USED_BY_SHOOTER,
             m_fieldVision.getTargetY(FieldVisionConstants.FRONT_CAMERA_INDEX).getDegrees());
     };
   private final Shooter m_shooter = new Shooter(m_shooterDistanceSupplier);

@@ -49,9 +49,21 @@ public class FieldVisionIOPhotonVisionSim extends FieldVisionIOPhotonVision {
 
     cameraSim = new PhotonCameraSim(camera, cameraProperties, aprilTagLayout);
 
+    // Disable image rendering to reduce simulation CPU usage.
+    // Simulated tag detections and pose estimates still work, even if all of the folowing are fale
+
+    // If true, Renders the simulated camera image without processing overlays.
+    // Only useful if you want to view it
     cameraSim.enableRawStream(true);
+
+    // Renders the image with detection overlays.
+    // Useful for checking camera placement and visible tags.
+    // The view can be displayed in a browser at http://localhost:1182/?action=stream
     cameraSim.enableProcessedStream(true);
-    cameraSim.enableDrawWireframe(true);
+
+    // If true, adds a field wireframe to the simulated images.	
+    // Optional; PhotonVision describes it as extremely resource intensive.
+    cameraSim.enableDrawWireframe(false);
     
     visionSim.addCamera(cameraSim, robotToCamera);
   }

@@ -79,7 +79,13 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
         
     var table = NetworkTableInstance.getDefault().getTable(cameraName);
     this.rotationSupplier = rotationSupplier;
+
+    // robot_orientation_set layout:
+    // [yaw, yawRate, pitch, pitchRate, roll, rollRate]
+    // Angles are degrees; angular rates are degrees per second.
+    // Currently only yaw is supplied; all other components are zero.
     orientationPublisher = table.getDoubleArrayTopic("robot_orientation_set").publish();
+
     txSubscriber = table.getDoubleTopic("tx").subscribe(0.0);
     tySubscriber = table.getDoubleTopic("ty").subscribe(0.0);
     megatag1Subscriber = table.getDoubleArrayTopic("botpose_wpiblue").subscribe(new double[] {});
@@ -145,8 +151,45 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
     // Read new pose observations from NetworkTables
     Set<Integer> tagIds = new HashSet<>();
     List<PoseObservation> poseObservations = new LinkedList<>();
+
+    // Both pose topics use the WPILib blue-alliance field origin:
+    //   botpose_wpiblue     = MegaTag1
+    //   botpose_orb_wpiblue = MegaTag2
+    //
+    // Each rawSample is one timestamped NetworkTables update.
+    // rawSample.timestamp is local NT time in nanoseconds (WPILib 2027 alpha-7).
+    // rawSample.value contains an 11-value header followed by per-tag records:
+    //
+    // Header:
+    //   [0..2]  Robot field position: X, Y, Z (meters)
+    //   [3..5]  Robot field orientation: roll, pitch, yaw (degrees)
+    //   [6]     Total capture + pipeline latency (milliseconds)
+    //   [7]     Number of tags contributing to the pose
+    //   [8]     Tag span (meters)
+    //   [9]     Average distance from camera to contributing tags (meters)
+    //   [10]    Average contributing-tag area (percentage of image)
+    //
+    // Starting at [11], each tag occupies 7 values:
+    //   [+0] ID
+    //   [+1] Horizontal offset from principal pixel (degrees)
+    //   [+2] Vertical offset from principal pixel (degrees)
+    //   [+3] Target area (percentage of image)
+    //   [+4] Distance to camera (meters)
+    //   [+5] Distance to robot (meters)
+    //   [+6] Pose ambiguity
+    //
+    // readQueue() drains buffered updates, so an empty queue produces no new
+    // observations. It avoids repeatedly processing a cached latest value.
+    // Only updates retained by the NT subscription can be read.
+    
     for (var rawSample : megatag1Subscriber.readQueue()) {
+
+      // Require the complete 11-value header and at least one contributing tag.
       if (rawSample.value.length < 11 || rawSample.value[7] <= 0) continue;
+
+      // Walk complete 7-value tag records after the header.
+      // i points to the tag ID; i + 6 is the record's final value (ambiguity).
+      // A trailing incomplete record is ignored.
       for (int i = 11; i + 6 < rawSample.value.length; i += 7) {
         tagIds.add((int) rawSample.value[i]);
       }
@@ -159,9 +202,11 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
               // 3D pose estimate
               parsePose(rawSample.value),
 
-              // Ambiguity, using only the first tag because ambiguity isn't applicable for
-              // multitag
-              rawSample.value.length >= 18 ? rawSample.value[17] : 0.0,
+              // First tag's ambiguity is at 11 + 6 = 17.
+              // FieldVision checks this only for single-tag observations.
+              // If the first tag record is absent, this implementation uses 0.0;
+              // that is a fallback, not a measured zero ambiguity.
+              rawSample.value.length >= 18 ? rawSample.value[17] : 0.0,              
 
               // Tag count
               (int) rawSample.value[7],
@@ -173,10 +218,17 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
               PoseObservationType.MEGATAG_1));
     }
     for (var rawSample : megatag2Subscriber.readQueue()) {
+
+      // Require the complete 11-value header and at least one contributing tag.
       if (rawSample.value.length < 11 || rawSample.value[7] <= 0) continue;
+
+      // Walk complete 7-value tag records after the header.
+      // i points to the tag ID; i + 6 is the record's final value (ambiguity).
+      // A trailing incomplete record is ignored.
       for (int i = 11; i + 6 < rawSample.value.length; i += 7) {
         tagIds.add((int) rawSample.value[i]);
       }
+
       poseObservations.add(
           new PoseObservation(
               // Timestamp converted from local NetworkTables time to CTRE time,
@@ -186,7 +238,9 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
               // 3D pose estimate
               parsePose(rawSample.value),
 
-              // Ambiguity, zeroed because the pose is already disambiguated
+              // MegaTag2 uses supplied robot orientation to resolve pose ambiguity.
+              // Store 0.0 so the single-tag ambiguity filter does not reject MT2
+              // based on the geometric ambiguity metric used for MT1.
               0.0,
 
               // Tag count
@@ -213,6 +267,12 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
     }
   }
 
+  /**
+   * Converts botpose header values [0..5] into a robot Pose3d.
+   * Position is already in meters; roll/pitch/yaw are converted from
+   * Limelight's degrees to the radians required by Rotation3d.
+   * The caller must validate the array length before calling.
+   */
   /** Parses the 3D pose from a Limelight botpose array. */
   private static Pose3d parsePose(double[] rawLLArray) {
     return new Pose3d(
@@ -241,8 +301,10 @@ public class FieldVisionIOLimelight implements FieldVisionIO {
     // *** NetworkTablesJNI.java and TimestampedDoubleArray.timestamp
     // ***
     double ntNowSeconds = NetworkTablesJNI.now() * 1.0e-9;
-    double ctreNowSeconds = Utils.getCurrentTimeSeconds();
-
+    double ctreNowSeconds = Utils.getCurrentTimeSeconds();  
+    
+    // Measurement time = current CTRE time - sample age - camera latency.
+    // Subtract camera latency exactly once to estimate capture time.
     return ctreNowSeconds
         - (ntNowSeconds - ntTimestampNanoseconds * 1.0e-9)
         - latencyMilliseconds * 1.0e-3;

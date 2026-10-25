@@ -71,40 +71,21 @@ public final class Constants {
     /** Distance from the center of the robot to the front limelight lens in Inches */
     public static final double FRONT_LIMELIGHT_FORWARD_DISTANCE = Inches.of(22.416).in(Meters);
 
-    public static final double FRONT_LIMELIGHT_FORWARD_DISTANCE_INCHES = 22.416;
-
     /** Distance from the floor to the front limelight lens in Inches */
     public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(22.625).in(Meters);
-
-    public static final double FRONT_LIMELIGHT_UP_DISTANCE_INCHES = 23.75;
-
-    /*Units: degrees */
-    public static final double LIMELIGHT_MOUNT_ANGLE = 30;
 
     /** Units: Degrees - Up is positive */
     public static final double FRONT_LIMELIGHT_PITCH = 25;
 
-    // These needs to be tested and adjusted later on
-    public static final double FRONT_X_STD_DEV = 0.04;
-    public static final double FRONT_Y_STD_DEV = 0.0017;
-    public static Vector<N3> FRONT_STD_DEVS =
-        VecBuilder.fill(FRONT_X_STD_DEV, FRONT_Y_STD_DEV, Double.MAX_VALUE);
+    /* NOTE THAT THE FOLLOWING VALUES ARE ONLY USED BY THE SHOOTER TO COMPUTE MOTOR POWER
+       AND THEY ARE NOT USED ELSEWHERE, SUCH AS FOR POSE ESTIMATION.
+       ALSO, NOTE THAT THEIR VALUES ARE NOT CORRECT BUT HAVE BEEN USED IN CALIBRATIONS.
+       THEY REALLY SHOULD BE REMOVED AND THE SHOOTER RECOLIBRATED.
+    */
+    public static final double FRONT_LIMELIGHT_UP_DISTANCE_INCHES_USED_BY_SHOOTER = 23.75;
+    public static final double LIMELIGHT_MOUNT_ANGLE_USED_BY_SHOOTER = 30;
 
-    public static final String BACK_LIMELIGHT_NAME = "limelight-back";
 
-    /** Distance from the center of the robot to the back limelight lens in meters */
-    public static final double BACK_LIMELIGHT_FORWARD_DISTANCE = Inches.of(0).in(Meters);
-
-    /** Distance from the floor to the front limelight lens in meters */
-    public static final double BACK_LIMELIGHT_UP_DISTANCE = Inches.of(0).in(Meters);
-
-    /** Units: degree */
-    public static final double BACK_LIMELIGHT_YAW = 180;
-
-    public static final double BACK_X_STD_DEV = 0;
-    public static final double BACK_Y_STD_DEV = 0;
-    public static Vector<N3> BACK_STD_DEVS =
-        VecBuilder.fill(BACK_X_STD_DEV, BACK_Y_STD_DEV, Double.MAX_VALUE);
   }
 
   public static class FieldConstants {
