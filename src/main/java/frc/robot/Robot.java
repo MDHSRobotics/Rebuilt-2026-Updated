@@ -107,10 +107,9 @@ public class Robot extends LoggedRobot {
     // Start AdvantageKit logger
     Logger.start();
 
-
-    if (RobotBase.isSimulation()) {
-        DriverStationSim.setAllianceStationId(SimulationConstants.SIMULATION_ALLIANCE_STATION_ID);
-        DriverStationSim.notifyNewData();
+    if (Constants.currentMode == Constants.Mode.SIM) {
+      DriverStationSim.setAllianceStationId(SimulationConstants.SIMULATION_ALLIANCE_STATION_ID);
+      DriverStationSim.notifyNewData();
     }
 
     m_matchTimePub = NetworkTableInstance.getDefault().getDoubleTopic("Match Time").publish();
