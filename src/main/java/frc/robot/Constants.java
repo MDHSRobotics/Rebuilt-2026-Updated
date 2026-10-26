@@ -3,19 +3,30 @@ package frc.robot;
 import static org.wpilib.units.Units.Inches;
 import static org.wpilib.units.Units.Meters;
 
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchState;
 import org.wpilib.fields.Field;
 import org.wpilib.fields.Fields;
 import org.wpilib.framework.RobotBase;
 import org.wpilib.math.linalg.VecBuilder;
 import org.wpilib.math.linalg.Vector;
+import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation3d;
 import org.wpilib.math.numbers.N3;
+
+import frc.robot.subsystems.vision.FieldVisionConstants;
+
 import org.wpilib.hardware.bus.CANPort;
 import org.wpilib.hardware.hal.AllianceStationID;
 
 public final class Constants {
   private Constants() {}
+
+  /** The update period of the robot in seconds. */
+  public static final double UPDATE_PERIOD = 0.02;
+
+  public static final boolean TUNING_MODE = false;
 
   /**
    * The following constants define the runtime mode used by AdvantageKit.
@@ -36,14 +47,6 @@ public final class Constants {
     REPLAY
   }
 
-  /** The update period of the robot in seconds. */
-  public static final double UPDATE_PERIOD = 0.02;
-
-  public static final boolean TUNING_MODE = false;
-
-  // Default alliance station ID for simulation only
-  public static final AllianceStationID SIMULATION_ALLIANCE_STATION_ID = AllianceStationID.BLUE_2;
-
   public static class ControllerConstants {
     private ControllerConstants() {}
 
@@ -51,16 +54,16 @@ public final class Constants {
     public static final int OPERATOR_CONTROLLER_PORT = 1;
   }
 
-  public static class CanBusConstants {
+  
+  public static class BusConstants {
+    private BusConstants() {}
 
-    private CanBusConstants() {}
-
-    // CAN bus for subsystems and other electrical components
-    // Ports S0-S4 are Systemcore CAN buses.  
-    public static final CANPort SHOOTER_CAN_BUS = CANPort.CAN_S0;
-    public static final CANPort HOPPER_CAN_BUS = CANPort.CAN_S0; 
-    public static final CANPort INTAKE_CAN_BUS = CANPort.CAN_S0;
-    public static final CANPort POWER_DISTRIBUTION_CAN_BUS = CANPort.CAN_S0;
+    public static final CANPort ENERGY_MONITOR_BUS = CANPort.CAN_S0;
+    public static final CANPort INTAKE_BUS = CANPort.CAN_S0;
+    public static final CANPort HOPPER_BUS = CANPort.CAN_S0;
+    public static final CANPort SHOOTER_BUS = CANPort.CAN_S0;
+    public static final CANPort DRIVE_BUS = CANPort.CAN_S1;
+    
   }
 
   public static class VisionConstants {
@@ -84,8 +87,6 @@ public final class Constants {
     */
     public static final double FRONT_LIMELIGHT_UP_DISTANCE_INCHES_USED_BY_SHOOTER = 23.75;
     public static final double LIMELIGHT_MOUNT_ANGLE_USED_BY_SHOOTER = 30;
-
-
   }
 
   public static class FieldConstants {
@@ -148,14 +149,55 @@ public final class Constants {
     public static final double DISTANCE_FROM_FLOOR_TO_HUB_TAG = 44.25;
   }
 
-  public static class BusConstants {
-    private BusConstants() {}
+  public static class SimulationConstants {
+    private SimulationConstants() {}
 
-    public static final CANPort ENERGY_MONITOR_BUS = CANPort.CAN_S0;
-    public static final CANPort INTAKE_BUS = CANPort.CAN_S0;
-    public static final CANPort HOPPER_BUS = CANPort.CAN_S0;
-    public static final CANPort SHOOTER_BUS = CANPort.CAN_S0;
-    public static final CANPort DRIVE_BUS = CANPort.CAN_S1;
-    
+    // Default alliance station ID for simulation only
+    public static final AllianceStationID SIMULATION_ALLIANCE_STATION_ID = AllianceStationID.BLUE_2;
+
+    // Dimensions of the simulated robot from bumper to bumper
+    // Got these values from AdvantageKit large robot (30 inches)
+    public static final double ADVANTAGESCOPE_ROBOT_WIDTH = Inches.of(30).in(Meters);
+    public static final double ADVANTAGESCOPE_ROBOT_LENGTH = Inches.of(30).in(Meters);
+    /**
+     * Returns the starting position of the robot on the field for simulation purposes.
+     * This is based on the current alliance.
+     * The starting position is calculated to be inset from the walls by half the robot's bumper-to-bumper dimensions.
+     *
+     * @return The starting pose of the robot on the field.
+     */
+    public static Pose2d getSimulationStartingPosition() {
+
+      double xInsetFromWall = ADVANTAGESCOPE_ROBOT_LENGTH / 2.0;
+      double yInsetFromWall = ADVANTAGESCOPE_ROBOT_WIDTH / 2.0;
+
+      double fieldLength = FieldVisionConstants.aprilTagLayout.getFieldLength();
+      double fieldWidth = FieldVisionConstants.aprilTagLayout.getFieldWidth();
+
+      boolean isRed;
+      switch (SIMULATION_ALLIANCE_STATION_ID) {
+        case AllianceStationID.RED_1:
+        case AllianceStationID.RED_2:
+        case AllianceStationID.RED_3:
+          isRed = true;
+          break;
+        case AllianceStationID.BLUE_1:
+        case AllianceStationID.BLUE_2:
+        case AllianceStationID.BLUE_3:
+          isRed = false;
+          break;
+        default:
+          throw new IllegalArgumentException("Invalid simulation alliance station ID: " + SIMULATION_ALLIANCE_STATION_ID);
+      }
+
+      Pose2d startingPose =
+          new Pose2d(
+              isRed ? fieldLength - xInsetFromWall : xInsetFromWall,
+              isRed ? fieldWidth - yInsetFromWall : yInsetFromWall,
+              isRed ? Rotation2d.k180deg : Rotation2d.ZERO);
+
+      return startingPose;
+    }
   }
+
 }

@@ -44,6 +44,9 @@ import org.wpilib.command2.CommandScheduler;
 //SYSTEMCORE import frc.robot.util.Elastic;
 import com.revrobotics.util.StatusLogger;
 
+import frc.robot.Constants.Mode;
+import frc.robot.Constants.SimulationConstants;
+import frc.robot.subsystems.vision.FieldVisionConstants;
 import frc.robot.util.logging.EpochLogger;
 import frc.robot.util.logging.LoggableSparkFlex;
 //SYSTEMCORE import org.littletonrobotics.urcl.URCL;
@@ -106,7 +109,7 @@ public class Robot extends LoggedRobot {
 
 
     if (RobotBase.isSimulation()) {
-        DriverStationSim.setAllianceStationId(Constants.SIMULATION_ALLIANCE_STATION_ID);
+        DriverStationSim.setAllianceStationId(SimulationConstants.SIMULATION_ALLIANCE_STATION_ID);
         DriverStationSim.notifyNewData();
     }
 
@@ -275,6 +278,20 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void utilityExit() {}
+
+  @Override
+  public void simulationInit() {
+
+    // Only initialize the startng position in live simulation, not log replay.
+    if (Constants.currentMode == Mode.SIM) {
+
+      // Reset the robot's field position to the calculated starting position.
+      m_robotContainer.resetFieldPosition(SimulationConstants.getSimulationStartingPosition() );
+
+      // Keep disabledPeriodic() from replacing this starting heading.
+      m_hasAppliedRobotRotation = true;
+    }
+  }
 
   @Override
   public void simulationPeriodic() {}
