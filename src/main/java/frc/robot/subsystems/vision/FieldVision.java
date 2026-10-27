@@ -180,13 +180,15 @@ public class FieldVision extends SubsystemBase {
       allRobotPosesRejected.addAll(robotPosesRejected);
     }
 
-    // Log summary data
-    Logger.recordOutput("FieldVision/Summary/TagPoses", allTagPoses.toArray(new Pose3d[0]));
-    Logger.recordOutput("FieldVision/Summary/RobotPoses", allRobotPoses.toArray(new Pose3d[0]));
-    Logger.recordOutput(
-        "FieldVision/Summary/RobotPosesAccepted", allRobotPosesAccepted.toArray(new Pose3d[0]));
-    Logger.recordOutput(
-        "FieldVision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(new Pose3d[0]));
+    // Log summary data for if more than one Camera
+    if (this.io.length > 1) {
+      Logger.recordOutput("FieldVision/Cameras (all)/TagPoses", allTagPoses.toArray(new Pose3d[0]));
+      Logger.recordOutput("FieldVision/Cameras (all)/RobotPoses", allRobotPoses.toArray(new Pose3d[0]));
+      Logger.recordOutput(
+          "FieldVision/Cameras (all)/RobotPosesAccepted", allRobotPosesAccepted.toArray(new Pose3d[0]));
+      Logger.recordOutput(
+          "FieldVision/Cameras (all)/RobotPosesRejected", allRobotPosesRejected.toArray(new Pose3d[0]));
+    }
   }
 
   @FunctionalInterface

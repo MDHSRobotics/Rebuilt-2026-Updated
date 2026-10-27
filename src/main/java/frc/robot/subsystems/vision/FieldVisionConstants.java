@@ -11,8 +11,8 @@ import org.wpilib.fields.Field;
 import org.wpilib.fields.Fields;
 import org.wpilib.math.geometry.Rotation3d;
 import org.wpilib.math.geometry.Transform3d;
-import org.wpilib.math.util.Units;
-import frc.robot.Constants;
+import static org.wpilib.units.Units.Inches;
+import static org.wpilib.units.Units.Meters;
 
 public class FieldVisionConstants {
 
@@ -36,14 +36,18 @@ public class FieldVisionConstants {
   public static CameraSpec[] robotCameras = {
     new CameraSpec(
         VisionType.LIMELIGHT,
-        Constants.VisionConstants.FRONT_LIMELIGHT_NAME,
+        "limelight-front",
         new Transform3d(
-            Constants.VisionConstants.FRONT_LIMELIGHT_FORWARD_DISTANCE,
+            // Forward distance from the center of the robot to the limelight lens in Meters
+            Inches.of(22.416).in(Meters),
+            // Lateral distance from the center of the robot to the limelight lens in Meters
             0.0,
-            Constants.VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
+            // Vertical distance from the floor to the limelight lens in Meters
+            Inches.of(22.625).in(Meters),
             new Rotation3d(
+                // Roll, pitch, yaw
                 // Don't forget that the pitch should be negative to point up
-                0.0, -Math.toRadians(Constants.VisionConstants.FRONT_LIMELIGHT_PITCH), 0.0)))
+                0.0, -Math.toRadians(25), 0.0)))
   };
 
   public final static int FRONT_CAMERA_INDEX = 0;

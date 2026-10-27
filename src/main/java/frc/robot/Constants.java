@@ -2,18 +2,12 @@ package frc.robot;
 
 import static org.wpilib.units.Units.Inches;
 import static org.wpilib.units.Units.Meters;
-
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchState;
 import org.wpilib.fields.Field;
 import org.wpilib.fields.Fields;
 import org.wpilib.framework.RobotBase;
-import org.wpilib.math.linalg.VecBuilder;
-import org.wpilib.math.linalg.Vector;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation3d;
-import org.wpilib.math.numbers.N3;
 
 import frc.robot.subsystems.vision.FieldVisionConstants;
 
@@ -64,29 +58,6 @@ public final class Constants {
     public static final CANPort SHOOTER_BUS = CANPort.CAN_S0;
     public static final CANPort DRIVE_BUS = CANPort.CAN_S1;
     
-  }
-
-  public static class VisionConstants {
-    private VisionConstants() {}
-
-    public static final String FRONT_LIMELIGHT_NAME = "limelight-front";
-
-    /** Distance from the center of the robot to the front limelight lens in Inches */
-    public static final double FRONT_LIMELIGHT_FORWARD_DISTANCE = Inches.of(22.416).in(Meters);
-
-    /** Distance from the floor to the front limelight lens in Inches */
-    public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(22.625).in(Meters);
-
-    /** Units: Degrees - Up is positive */
-    public static final double FRONT_LIMELIGHT_PITCH = 25;
-
-    /* NOTE THAT THE FOLLOWING VALUES ARE ONLY USED BY THE SHOOTER TO COMPUTE MOTOR POWER
-       AND THEY ARE NOT USED ELSEWHERE, SUCH AS FOR POSE ESTIMATION.
-       ALSO, NOTE THAT THEIR VALUES ARE NOT CORRECT BUT HAVE BEEN USED IN CALIBRATIONS.
-       THEY REALLY SHOULD BE REMOVED AND THE SHOOTER RECOLIBRATED.
-    */
-    public static final double FRONT_LIMELIGHT_UP_DISTANCE_INCHES_USED_BY_SHOOTER = 23.75;
-    public static final double LIMELIGHT_MOUNT_ANGLE_USED_BY_SHOOTER = 30;
   }
 
   public static class FieldConstants {

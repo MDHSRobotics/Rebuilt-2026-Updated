@@ -41,4 +41,12 @@ public class ShooterConstants extends SubsystemBase {
   public static final double SLOPE = 36. / 7.;
   // This is the rpm of the closest distance that the shooter can shoot the ball into the hub
   public static final double INTERCEPT = 2156;
+
+  /* NOTE THAT THE FOLLOWING VALUES ARE ONLY USED BY THE SHOOTER TO COMPUTE MOTOR POWER
+      AND THEY ARE NOT USED ELSEWHERE, SUCH AS FOR POSE ESTIMATION.
+      ALSO, NOTE THAT THEIR VALUES ARE NOT CORRECT BUT HAVE BEEN USED IN CALIBRATIONS.
+      THEY REALLY SHOULD BE REMOVED AND THE SHOOTER RECOLIBRATED.
+  */
+  public static final double FRONT_LIMELIGHT_UP_DISTANCE_INCHES_USED_BY_SHOOTER = 23.75;
+  public static final double LIMELIGHT_MOUNT_ANGLE_USED_BY_SHOOTER = 30;
 }

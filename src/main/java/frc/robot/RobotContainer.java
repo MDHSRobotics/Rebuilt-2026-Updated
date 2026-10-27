@@ -29,7 +29,6 @@ import org.wpilib.command2.sysid.SysIdRoutine;
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.Mode;
-import frc.robot.Constants.VisionConstants;
 import frc.robot.commands.AimingCommand;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -79,9 +78,9 @@ public class RobotContainer {
             return Double.NaN;
         }
         return Aiming.calculateTagDistance(
-            VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE_INCHES_USED_BY_SHOOTER,
+            ShooterConstants.FRONT_LIMELIGHT_UP_DISTANCE_INCHES_USED_BY_SHOOTER,
             FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG,
-            VisionConstants.LIMELIGHT_MOUNT_ANGLE_USED_BY_SHOOTER,
+            ShooterConstants.LIMELIGHT_MOUNT_ANGLE_USED_BY_SHOOTER,
             m_fieldVision.getTargetY(FieldVisionConstants.FRONT_CAMERA_INDEX).getDegrees());
     };
   private final Shooter m_shooter = new Shooter(m_shooterDistanceSupplier);
