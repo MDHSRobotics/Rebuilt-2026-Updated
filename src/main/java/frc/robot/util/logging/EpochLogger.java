@@ -33,7 +33,7 @@ public class EpochLogger {
                 DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
             );
 
-            Path logPath = Path.of("/U/epoch-logs/epochs_" + timestamp + ".txt");
+            Path logPath = Path.of("/home/systemcore/epoch-logs/epochs_" + timestamp + ".txt");
 
             writer = Files.newBufferedWriter(logPath, StandardCharsets.UTF_8);
 
