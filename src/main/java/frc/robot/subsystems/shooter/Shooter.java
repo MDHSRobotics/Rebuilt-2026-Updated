@@ -79,7 +79,6 @@ public class Shooter extends SubsystemBase implements Testable {
   private double m_currentDistance = 0;
 
   private double m_shooterTrim = -150;
-  private boolean m_tagIsSeen = false;
 
   SparkFlexConfig shooterLeftMotorConfig;
 
@@ -164,14 +163,11 @@ public class Shooter extends SubsystemBase implements Testable {
     // This returns NaN if the target is not seen, which is handled in the next step.
     double distance = m_distanceSupplier.getAsDouble();
 
-    m_tagIsSeen = Double.isFinite(distance);
-
-    if (m_tagIsSeen) {
+    if (Double.isFinite(distance)) {
         m_currentDistance = distance;
     }
 
     m_shooterTelemetry.log("Distance From Robot to AprilTag", m_currentDistance);
-    Telemetry.log("AprilTag is recognized", m_tagIsSeen);
   }
 
   public void runLeftMotor(double power, double kickerPower) {

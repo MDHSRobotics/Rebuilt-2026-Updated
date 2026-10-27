@@ -383,7 +383,7 @@ private Trigger m_intakes =
                                     : 0.0)
                                 * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
                 .until(m_autoAlignCanceled));
-    m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
+    m_operatorController.y().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
     m_autoAlignCanceled.onTrue(Commands.runOnce(() -> m_isLocked = false));
 
     // Face the Hub Using Swerve Request: Square

@@ -40,12 +40,12 @@ public class DriveTelemetry {
 
     /* Set up the module state Mechanism2d telemetry */
     for (int i = 0; i < 4; ++i) {
-      Telemetry.log("Module " + i, m_moduleMechanisms[i]);
+      driveTelem.log("Module " + i, m_moduleMechanisms[i]);
     }
   }
   
   /* Table for swerve telemetry publishing */
-  private final TelemetryTable swerveTelem = Telemetry.getTable("Swerve");
+  private final TelemetryTable driveTelem = Telemetry.getTable("Drive");
 
   /* Robot pose on a field */
   private final Field2d field = new Field2d();
@@ -78,11 +78,6 @@ public class DriveTelemetry {
 
   private final DoublePublisher m_driveOdometryFrequencyPub =
       m_driveStateTable.getDoubleTopic("OdometryFrequency").publish();
-
-  /* Robot pose for field positioning */
-  private final NetworkTable table = m_inst.getTable("Pose");
-  private final DoubleArrayPublisher fieldPub = table.getDoubleArrayTopic("robotPose").publish();
-  private final StringPublisher fieldTypePub = table.getStringTopic(".type").publish();
 
   /* Mechanisms to represent the swerve module states */
   private final Mechanism2d[] m_moduleMechanisms =
@@ -122,8 +117,6 @@ public class DriveTelemetry {
             .append(new MechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.WHITE))),
       };
 
-  private final double[] m_poseArray = new double[3];
-
   private final DoublePublisher m_linearSpeedPub =
       m_driveStateTable.getDoubleTopic("Linear Speed").publish();
 
@@ -156,14 +149,6 @@ public class DriveTelemetry {
 
     SignalLogger.writeDouble("DriveState/OdometryPeriod", state.OdometryPeriod, "seconds");
 
-    /* Telemeterize the pose to a Field2d */
-    fieldTypePub.set("Field2d");
-
-    m_poseArray[0] = state.Pose.getX();
-    m_poseArray[1] = state.Pose.getY();
-    m_poseArray[2] = state.Pose.getRotation().getDegrees();
-    fieldPub.set(m_poseArray);
-
     /* Telemeterize each module state to a Mechanism2d */
     for (int i = 0; i < 4; ++i) {
       m_moduleSpeeds[i].setAngle(state.ModuleVelocities[i].angle);
@@ -175,11 +160,11 @@ public class DriveTelemetry {
     SignalLogger.writeStruct("DriveState", state.getStruct(), state, state.Timestamp);
 
     /* Also telemeterize the swerve drive state */
-    swerveTelem.log("DriveState", state, state.getStruct());
+    driveTelem.log("DriveState", state, state.getStruct());
 
     /* Telemeterize the pose to a Field2d */
     field.setRobotPose(state.Pose);
-    swerveTelem.log("Pose", field);
+    driveTelem.log("Pose On Field", field);
   }
 
     /**

@@ -317,8 +317,6 @@ public void periodic() {
                 m_hasAppliedOperatorPerspective = true;
               });
     }
-
-    Telemetry.log("DrivetrainPose", getState().Pose);
   }
 
   private void startSimThread() {
