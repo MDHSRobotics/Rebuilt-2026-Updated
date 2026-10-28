@@ -213,6 +213,15 @@ public class Shooter extends SubsystemBase implements Testable {
     return txAdjusment;
   }
 
+  private boolean isTagOnHub(int tid) {
+    for (int hubid : ShooterConstants.HUB_IDS) {
+        if (tid == hubid) {
+            return true;
+        }
+    }
+    return false;
+  }
+
   public Command test() {
     return Commands.sequence(
         Commands.run(

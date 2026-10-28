@@ -49,4 +49,6 @@ public class ShooterConstants extends SubsystemBase {
   */
   public static final double FRONT_LIMELIGHT_UP_DISTANCE_INCHES_USED_BY_SHOOTER = 23.75;
   public static final double LIMELIGHT_MOUNT_ANGLE_USED_BY_SHOOTER = 30;
+
+  public static final int[] HUB_IDS = {2, 5, 8, 9, 10, 11, 18, 21, 24, 25, 26, 27};
 }
