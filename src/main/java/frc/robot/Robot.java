@@ -133,6 +133,7 @@ public class Robot extends LoggedRobot {
     } else {
         // SystemCore: logs on USB drive
         SignalLogger.setPath("/home/systemcore/ctre-logs/");
+        SignalLogger.stop();
         //SignalLogger.start();
 
         //DataLogManager.start("/home/systemcore/WPI-logs/");

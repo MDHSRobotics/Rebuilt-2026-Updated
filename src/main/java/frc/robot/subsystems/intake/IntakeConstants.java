@@ -45,7 +45,7 @@ public class IntakeConstants extends SubsystemBase {
   public static final double STOWED_POSITION_RIGHT = 0.440;
 
   /** The intake power of the spinners */
-  public static final double INTAKE_SPINNERS_POWER = 0.9;
+  public static final double INTAKE_SPINNERS_POWER = 0.78;
 
   /** The intake power when running reverse */
   public static final double INTAKE_SPINNERS_POWER_REVERSE = -0.9;

@@ -326,9 +326,8 @@ private Trigger m_intakes =
                     Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
     
     // Set rumble on the driver conroller when the robot is shooting the balls
-    m_shoot
-        .and(new Trigger(() -> !HubStatus.isHubActive(3, 3)))
-        .whileTrue(
+     m_shoot.and(new Trigger(() -> !HubStatus.isHubActive(3, 3)))
+.whileTrue(
             Commands.runEnd(
                 () -> {
                     m_driverController.getHID().setRumble(
