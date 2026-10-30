@@ -176,59 +176,66 @@ public class Robot extends LoggedRobot {
     var nt = NetworkTableInstance.getDefault();
     var log = DataLogManager.getLog();
 
+    // NTConnection is outside of NT table
+    nt.startConnectionDataLog(log, "NTConnection");
+
+    // Individual top-level entries.
+    nt.startEntryDataLog(log, "Match Time", "NT:Match Time");
+
     // Entire tables to retain. Adjust these to match your actual NT paths.
     String[] tablePrefixes = {
-      "/.schema/",
-      "/AdvantageKit/",
-      "/Telemetry/",
-      "/Test/",
-      "/Tunables/",
-      "/DriverStation/",
+      "/.schema/",      // This is hidden by AdvantageScope but is needed for structed telemetry to work properly.
+      "/CameraPublisher/",
+      "/DriveState/",
+      "/limelight_telemetry/",
+      "/limelightshared/",
       "/PathPlanner/",
       "/Robot/",
       "/Swerve Requests/",
-      "/DriveState/",
-      "/Pose/",
-      "/CameraPublisher/",
-      "/limelight_telemetry/",
-      "/limelightshared/"
+      "/Telemetry/",
+      "/Test/",
+      "/Tunables/",
+      "/AdvantageKit/",
+      "/DriverStation/"
     };
 
     for (String prefix : tablePrefixes) {
       nt.startEntryDataLog(log, prefix, "NT:" + prefix);
     }
 
-    // Individual top-level entries.
-    nt.startEntryDataLog(log, "/Match Time", "NT:/Match Time");
-
     // Keep both names until the camera naming is resolved.
     String[] cameraNames = {"limelight-front", "limelightsc1"};
 
     // Do not include results_msgpack which is very large and not needed for logging. It is only used for the camera publisher to send data to the dashboard.
     String[] cameraTopics = {
-      "botpose",
-      "botpose_wpiblue",
-      "botpose_orb_wpiblue",
-      "stddevs",
-      "tv",
-      "tid",
-      "tx",
-      "ty",
-      "ta",
-      "cl",
-      "tl",
-      "hb",
-      "pipeline",
-      "getpipe",
-      "getpipetype",
-      "robot_orientation_set",
-      "robot_orientation_ignoreshared_set",
-      "camerapose_robotspace_set",
-      "imumode_set",
-      "imu",
-      "imu_yaw_offset",
-      "throttle_set",
-      "ledMode"
+      "botpose",          // Vision estimated robot poses
+      "camerapose",       // Camera transforms
+      //"capture_rewind", // Not sure but probably not needed 
+      "cl",               // Capture latency (milliseconds)
+      //"counter",        // Ignore: Used for object detection
+      "getcodepipeline_enabled",
+      "getpipe",          // Active pipeline index
+      "hb",               // Heartbeat counter
+      "hw",               // cpu temp, cpu usage, ram %, FPS
+      "imu",              // IMU
+      "ledMode",          // Pipeline-controlled, off, blink, or on, plus hardware-specific modes.
+      "pipeline",         // Requested pipeline index
+      //"results_msgpack",  // Ignore: uses lots of space!!!!
+      "robot_orientation_set",    // Orientation supplied by robot code
+      "stds",             // Camera-reported pose standard deviations for MegaTag1 and MegaTag2
+      //"t2d",            // Ignore: Array of other individual NT targeting measurements
+      "ta",               // Target area as a percentage of the image
+      "targetpose",       // Target transforms relative to the camera and robot coordinate systems.
+      //"tc",             // Ignore pixel color under crosshairs
+      //"tcclass",        // Ignore: for neural networks
+      //"tdclass",        // Ignore: for neural networks
+      "tdist",            // Distance to primary target in meters
+      "throttle_set",     // Number of frames to skip
+      "tid",              // Primary AprilTag ID
+      "tl",               // Processing-pipeline latency in milliseconds;
+      "tv",               // Target validity: 1 means a valid target exists; 0 means none.
+      "tx",               // Horizontal target offset from the crosshair, in degrees. 
+      "ty"                // Vertical target offset from the crosshair, in degrees.
     };
 
     for (String cameraName : cameraNames) {
