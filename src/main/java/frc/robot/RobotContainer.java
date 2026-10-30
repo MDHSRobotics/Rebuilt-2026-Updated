@@ -106,7 +106,7 @@ public class RobotContainer {
 
   /* Autonomous Creator - This dynamically creates commands based on settings in the Elastic Auto tab */
   private final DynamicAutoCreator m_dynamicAutoCreator =
-      new DynamicAutoCreator(this::resetFieldPosition, m_shooter, m_hopper, m_drivetrain);
+      new DynamicAutoCreator(this::resetFieldPosition, m_shooter, m_hopper, m_drivetrain, m_fieldVision);
 
   private final DriveTelemetry m_logger = new DriveTelemetry(DriveConstants.MAX_LINEAR_SPEED);
 

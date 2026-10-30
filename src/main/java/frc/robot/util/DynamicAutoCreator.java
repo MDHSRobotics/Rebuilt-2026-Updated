@@ -19,9 +19,14 @@ import org.wpilib.command2.ParallelCommandGroup;
 import org.wpilib.command2.RunCommand;
 import org.wpilib.command2.SequentialCommandGroup;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperConstants.HopperPowers;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.vision.FieldVisionConstants;
+import frc.robot.subsystems.vision.FieldVision;
+
+import java.lang.reflect.Field;
 import java.util.function.Consumer;
 
 /**
@@ -52,15 +57,19 @@ public class DynamicAutoCreator {
   private final SwerveRequest.FieldCentric m_drive =
       new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
+  private FieldVision m_fieldVision;
+  
   public DynamicAutoCreator(
       Consumer<Pose2d> odometryResetter,
       Shooter shooter,
       Hopper hopper,
-      CommandSwerveDrivetrain drivetrain) {
+      CommandSwerveDrivetrain drivetrain,
+      FieldVision fieldVision) {
     m_odometryResetter = odometryResetter;
     m_shooter = shooter;
     m_hopper = hopper;
     m_drivetrain = drivetrain;
+    m_fieldVision = fieldVision;
   }
 
   /*
@@ -158,7 +167,7 @@ public class DynamicAutoCreator {
   public Command createShootingAutoSequence() {
     Command auto_command =
         new SequentialCommandGroup(
-            Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(4),
+            Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(1),
             new ParallelCommandGroup(
                 Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE), m_hopper),
                 Commands.run(() -> m_shooter.shootBall(), m_shooter).withTimeout(6)));
@@ -172,7 +181,7 @@ public class DynamicAutoCreator {
             m_drivetrain.runOnce(() -> m_drivetrain.seedFieldCentric(Rotation2d.ZERO)),
             m_drivetrain
                 .applyRequest(
-                    () -> m_drive.withVelocityX(-1).withVelocityY(0).withRotationalRate(0))
+                    () -> m_drive.withVelocityX(-1).withVelocityY(0).withRotationalRate((m_fieldVision.hasTarget(FieldVisionConstants.FRONT_CAMERA_INDEX) ? m_shooter.getYawRotationalRate(m_fieldVision.getTargetX(FieldVisionConstants.FRONT_CAMERA_INDEX).getDegrees()): 0.0) * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
                 .withTimeout(1.5),
             m_drivetrain.applyRequest(() -> idle).withTimeout(0.5),
             createShootingAutoSequence());

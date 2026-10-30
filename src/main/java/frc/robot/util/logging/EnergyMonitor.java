@@ -8,7 +8,7 @@ public class EnergyMonitor {
 
   private final PowerDistribution m_pdh;
 
-  // SmartDashboard keys
+  // Telemetry keys
   private static final String KEY_TOTAL_CURRENT = "Energy/TotalCurrent";
   private static final String KEY_VOLTAGE = "Energy/Voltage";
   private static final String KEY_TOTAL_POWER = "Energy/TotalPower";
