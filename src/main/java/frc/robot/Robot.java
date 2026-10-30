@@ -137,6 +137,8 @@ public class Robot extends LoggedRobot {
         DataLogManager.start("/U/logs/WPI-logs/");
     }
 
+    configureNetworkTablesLogging();
+
     // Capture Driver Station data
     DriverStation.startDataLog(DataLogManager.getLog(), true);
 
@@ -159,6 +161,82 @@ public class Robot extends LoggedRobot {
     m_robotContainer = new RobotContainer();
 
     epochLogger.start();
+  }
+
+/* 
+   * Configures logging to explicitly identify which NetworkTables entries get stored in log file.
+   * This is used to control the size of the log file and to make sure that we are logging all the important entries for debugging.
+   * This is important because the default behavior of logging all NetworkTables entries can result in very large log files that are difficult to analyze.
+   */
+  private void configureNetworkTablesLogging() {
+
+    // Start logging nothing by default. We will explicitly add the entries we want to log.
+    DataLogManager.logNetworkTables(false);
+
+    var nt = NetworkTableInstance.getDefault();
+    var log = DataLogManager.getLog();
+
+    // Entire tables to retain. Adjust these to match your actual NT paths.
+    String[] tablePrefixes = {
+      "/.schema/",
+      "/AdvantageKit/",
+      "/Telemetry/",
+      "/Test/",
+      "/Tunables/",
+      "/DriverStation/",
+      "/PathPlanner/",
+      "/Robot/",
+      "/Swerve Requests/",
+      "/DriveState/",
+      "/Pose/",
+      "/CameraPublisher/",
+      "/limelight_telemetry/",
+      "/limelightshared/"
+    };
+
+    for (String prefix : tablePrefixes) {
+      nt.startEntryDataLog(log, prefix, "NT:" + prefix);
+    }
+
+    // Individual top-level entries.
+    nt.startEntryDataLog(log, "/Match Time", "NT:/Match Time");
+
+    // Keep both names until the camera naming is resolved.
+    String[] cameraNames = {"limelight-front", "limelightsc1"};
+
+    // Do not include results_msgpack which is very large and not needed for logging. It is only used for the camera publisher to send data to the dashboard.
+    String[] cameraTopics = {
+      "botpose",
+      "botpose_wpiblue",
+      "botpose_orb_wpiblue",
+      "stddevs",
+      "tv",
+      "tid",
+      "tx",
+      "ty",
+      "ta",
+      "cl",
+      "tl",
+      "hb",
+      "pipeline",
+      "getpipe",
+      "getpipetype",
+      "robot_orientation_set",
+      "robot_orientation_ignoreshared_set",
+      "camerapose_robotspace_set",
+      "imumode_set",
+      "imu",
+      "imu_yaw_offset",
+      "throttle_set",
+      "ledMode"
+    };
+
+    for (String cameraName : cameraNames) {
+      for (String topic : cameraTopics) {
+        String prefix = "/" + cameraName + "/" + topic;
+        nt.startEntryDataLog(log, prefix, "NT:" + prefix);
+      }
+    }
   }
 
   /** 
