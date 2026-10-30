@@ -24,7 +24,6 @@ import org.wpilib.command2.button.CommandDualShock4Controller;
 import org.wpilib.command2.button.CommandXboxController;
 import org.wpilib.command2.button.RobotModeTriggers;
 import org.wpilib.command2.button.Trigger;
-import org.wpilib.command2.sysid.SysIdRoutine;
 
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.Constants.FieldConstants;
@@ -327,7 +326,7 @@ private Trigger m_intakes =
     
     // Set rumble on the driver conroller when the robot is shooting the balls
      m_shoot.and(new Trigger(() -> !HubStatus.isHubActive(3, 3)))
-.whileTrue(
+        .whileTrue(
             Commands.runEnd(
                 () -> {
                     m_driverController.getHID().setRumble(

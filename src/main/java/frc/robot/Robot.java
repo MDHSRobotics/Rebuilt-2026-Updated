@@ -46,7 +46,6 @@ import com.revrobotics.util.StatusLogger;
 
 import frc.robot.Constants.Mode;
 import frc.robot.Constants.SimulationConstants;
-import frc.robot.subsystems.vision.FieldVisionConstants;
 import frc.robot.util.logging.EpochLogger;
 import frc.robot.util.logging.LoggableSparkFlex;
 //SYSTEMCORE import org.littletonrobotics.urcl.URCL;
@@ -132,11 +131,10 @@ public class Robot extends LoggedRobot {
         DataLogManager.start("logs/wpilib/");
     } else {
         // SystemCore: logs on USB drive
-        SignalLogger.setPath("/home/systemcore/ctre-logs/");
-        SignalLogger.stop();
-        //SignalLogger.start();
+        SignalLogger.setPath("/U/logs/ctre-logs/");
+        SignalLogger.start();
 
-        //DataLogManager.start("/home/systemcore/WPI-logs/");
+        DataLogManager.start("/U/logs/WPI-logs/");
     }
 
     // Capture Driver Station data
