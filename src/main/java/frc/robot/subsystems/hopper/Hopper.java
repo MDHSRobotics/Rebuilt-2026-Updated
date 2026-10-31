@@ -8,7 +8,6 @@ import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
-import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.telemetry.Telemetry;
 import org.wpilib.telemetry.TelemetryTable;
 import org.wpilib.command2.Command;
@@ -16,6 +15,7 @@ import org.wpilib.command2.Commands;
 import org.wpilib.command2.SubsystemBase;
 
 import frc.robot.Constants.BusConstants;
+import frc.robot.subsystems.hopper.HopperConstants.HopperPowers;
 import frc.robot.util.Testable;
 import frc.robot.util.logging.LoggableSparkFlex;
 import frc.robot.util.logging.LoggableSparkFlex.EncoderType;
@@ -36,6 +36,10 @@ public class Hopper extends SubsystemBase implements Testable {
           LoggedValue.VELOCITY,
           LoggedValue.CURRENT,
           LoggedValue.OUTPUT_VOLTAGE);
+    
+  private boolean m_intaking = false;
+  private boolean m_shooting = false;
+  private boolean m_reversing = false;
 
   public Hopper() {
     SparkFlexConfig m_hopperConfig = new SparkFlexConfig();
@@ -54,7 +58,34 @@ public class Hopper extends SubsystemBase implements Testable {
   }
 
   @Override
-  public void periodic() {}
+  public void periodic() {
+    if (m_shooting) {
+      runHopper(HopperPowers.SHOOT);
+    } else if (m_intaking) {
+      runHopper(HopperPowers.INTAKE);
+    } else if (m_reversing) {
+      runHopper(HopperPowers.INTAKE_REVERSE);
+    } else {
+      stopMotors();
+    }
+
+    m_hopperTelemetry.log("Shooting", m_shooting);
+    m_hopperTelemetry.log("Intaking", m_intaking);
+    m_hopperTelemetry.log("Reversing", m_reversing);
+
+  }
+
+  public void setIntaking(boolean enabled) {
+    m_intaking = enabled;
+  }
+
+  public void setShooting(boolean enabled) {
+    m_shooting = enabled;
+  }
+
+  public void setReversing(boolean enabled) {
+    m_reversing = enabled;
+  }
 
   public Command test() {
     return Commands.sequence(

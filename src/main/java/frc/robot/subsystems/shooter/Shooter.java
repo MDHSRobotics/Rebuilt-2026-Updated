@@ -17,7 +17,6 @@ import org.wpilib.command2.Commands;
 import org.wpilib.command2.SubsystemBase;
 import org.wpilib.command2.WaitCommand;
 
-import frc.robot.Constants;
 import frc.robot.Constants.BusConstants;
 import frc.robot.util.Aiming;
 import frc.robot.util.PolynomialInterpolation;
@@ -26,7 +25,6 @@ import frc.robot.util.logging.LoggableSparkFlex;
 import frc.robot.util.logging.LoggableSparkFlex.EncoderType;
 import frc.robot.util.logging.LoggableSparkFlex.LoggedValue;
 import frc.robot.util.logging.LoggedTunableNumber;
-import java.util.function.DoubleSupplier;
 
 import org.wpilib.command2.sysid.SysIdRoutine;
 

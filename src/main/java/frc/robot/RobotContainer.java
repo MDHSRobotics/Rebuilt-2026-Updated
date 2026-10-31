@@ -34,7 +34,6 @@ import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveTelemetry;
 import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.subsystems.hopper.Hopper;
-import frc.robot.subsystems.hopper.HopperConstants.HopperPowers;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
@@ -126,9 +125,9 @@ private final CommandXboxController m_operatorController =
 
 private Trigger m_autoAlignCanceled =
     new Trigger(() -> Math.abs(m_driverController.getL2()) > 0.1);
-private Trigger m_shoot =
+private Trigger m_shootTrigger =
     new Trigger(() -> m_operatorController.getHID().getRawAxis(3) > 0.5);
-private Trigger m_intakes =
+private Trigger m_intakeTrigger =
     new Trigger(() -> m_driverController.getRightX() > 0.5);
 
   // Power Distribution Hub
@@ -233,7 +232,7 @@ private Trigger m_intakes =
         "Shoot Balls",
         new ParallelCommandGroup(
             Commands.run(() -> m_shooter.shootBall(), m_shooter).withTimeout(6),
-            Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper).withTimeout(6)));
+            Commands.startEnd(() -> m_hopper.setShooting(true), () -> m_hopper.setShooting(false)).withTimeout(6)));
     NamedCommands.registerCommand(
         "Deploy Intake", Commands.run(() -> m_intake.runMotors(0.5, 0.5), m_intake).withTimeout(1));
     NamedCommands.registerCommand(
@@ -280,7 +279,7 @@ private Trigger m_intakes =
     // Subsystem Defaults
     m_shooter.setDefaultCommand(new RunCommand(() -> m_shooter.stopMotors(), m_shooter));
     m_intake.setDefaultCommand(new RunCommand(() -> m_intake.stopMotors(), m_intake));
-    m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stopMotors(), m_hopper));
+    m_hopper.setDefaultCommand(new RunCommand(() -> {}, m_hopper));
   }
 
   /**
@@ -314,18 +313,23 @@ private Trigger m_intakes =
                     .withTimeout(2),
                 new ParallelCommandGroup(
                     Commands.run(() -> m_shooter.shootBall(ShooterConstants.RPMS[2]), m_shooter),
-                    Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
+                    Commands.startEnd(() -> m_hopper.setShooting(true), () -> m_hopper.setShooting(false))
+                )
+            )
+        );
 
     // Shoot Ball: Triangle
-    m_shoot.whileTrue(
+    m_shootTrigger.whileTrue(
             new SequentialCommandGroup(
                 Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(1),
                 new ParallelCommandGroup(
                     Commands.run(() -> m_shooter.shootBall(), m_shooter),
-                    Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
+                    Commands.startEnd(() -> m_hopper.setShooting(true), () -> m_hopper.setShooting(false))                )
+            )
+        );
     
     // Set rumble on the driver conroller when the robot is shooting the balls
-     m_shoot.and(new Trigger(() -> !HubStatus.isHubActive(3, 3)))
+     m_shootTrigger.and(new Trigger(() -> !HubStatus.isHubActive(3, 3)))
         .whileTrue(
             Commands.runEnd(
                 () -> {
@@ -342,15 +346,13 @@ private Trigger m_intakes =
                 }));
 
     // Spin Intake: Left Trigger
-    m_intakes
+    m_intakeTrigger
         .whileTrue(
             new ParallelCommandGroup(
-                Commands.run(
-                    () -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER),
-                    m_intake),
-                Commands.run(
-                    () -> m_hopper.runHopper(HopperPowers.INTAKE),
-                    m_hopper)));
+                Commands.run(() -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER), m_intake),
+                Commands.startEnd(() -> m_hopper.setIntaking(true), () -> m_hopper.setIntaking(false))
+            )
+        );
 
     // Spin Intake Reverse: Left Bumper
     m_driverController.getHID().button(4)
@@ -359,9 +361,9 @@ private Trigger m_intakes =
                 Commands.run(
                     () -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER_REVERSE),
                     m_intake),
-                Commands.run(
-                    () -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE),
-                    m_hopper)));
+                Commands.startEnd(() -> m_hopper.setReversing(true), () -> m_hopper.setReversing(false))
+            )
+        );
 
 
     // Lock on to hub: Triangle
@@ -427,9 +429,9 @@ private Trigger m_intakes =
                 Commands.run(
                     () -> m_shooter.shootBall(m_testShooterRPM),
                     m_shooter),
-                Commands.run(
-                    () -> m_hopper.runHopper(HopperPowers.SHOOT),
-                    m_hopper)));
+                Commands.startEnd(() -> m_hopper.setShooting(true), () -> m_hopper.setShooting(false))
+            )
+        );
 
     // m_operatorController
     //     .leftTrigger()
