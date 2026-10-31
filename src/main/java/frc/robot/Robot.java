@@ -206,7 +206,7 @@ public class Robot extends LoggedRobot {
     // Keep both names until the camera naming is resolved.
     String[] cameraNames = {"limelight-front", "limelightsc1"};
 
-    // Do not include results_msgpack which is very large and not needed for logging. It is only used for the camera publisher to send data to the dashboard.
+    // Do not include results_msgpack which is very large and not needed for logging. 
     String[] cameraTopics = {
       "botpose",          // Vision estimated robot poses
       "camerapose",       // Camera transforms
@@ -222,7 +222,7 @@ public class Robot extends LoggedRobot {
       "pipeline",         // Requested pipeline index
       //"results_msgpack",  // Ignore: uses lots of space!!!!
       "robot_orientation_set",    // Orientation supplied by robot code
-      "stds",             // Camera-reported pose standard deviations for MegaTag1 and MegaTag2
+      "stddevs",          // Camera-reported pose standard deviations for MegaTag1 and MegaTag2
       //"t2d",            // Ignore: Array of other individual NT targeting measurements
       "ta",               // Target area as a percentage of the image
       "targetpose",       // Target transforms relative to the camera and robot coordinate systems.
