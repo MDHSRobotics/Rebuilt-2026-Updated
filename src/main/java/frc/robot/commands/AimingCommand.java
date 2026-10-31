@@ -3,6 +3,7 @@ package frc.robot.commands;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import org.wpilib.driverstation.MatchState;
+import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.command2.Command;
 
@@ -74,7 +75,11 @@ public class AimingCommand {
                     .withDeadband(m_deadbandSupplier.getAsDouble())));
   }
 
-  public Command alignWithHub() {
+  /**
+   * Align with one of the apriltags on the hub, based on alliance color
+   * @return
+   */
+  public Command alignWithHubApriltag() {
     return m_drivetrain.startRun(
         () -> {
           // Must call reset before using this swerve request
@@ -92,5 +97,45 @@ public class AimingCommand {
                     .withVelocityX(m_velocityXSupplier.getAsDouble())
                     .withVelocityY(m_velocityYSupplier.getAsDouble())
                     .withDeadband(m_deadbandSupplier.getAsDouble())));
+  }
+
+  /**
+   * Align to Hub based on the robot's current pose relative to the center of the hub
+   * @return command
+   */
+  public Command alignWithHubCenter() {
+    return m_drivetrain.startRun(
+        () -> m_driveFacingAngle.resetRequest(),
+        () -> {
+          var alliance = MatchState.getAlliance();
+          
+          // Preserve translation without rotating if alliance is unknown.
+          if (alliance.isEmpty()) {
+            m_driveFacingAngle.withTargetDirection(
+                m_drivetrain.getState().Pose.getRotation());
+          } else {
+            var hubCenter =
+                alliance.get() == Alliance.BLUE
+                    ? FieldConstants.BLUE_HUB_CENTER
+                    : FieldConstants.RED_HUB_CENTER;
+
+            var robotPose = m_drivetrain.getState().Pose;
+            var toHub = hubCenter.minus(robotPose.getTranslation());
+
+            Rotation2d deltaAngle = toHub.getNorm() > 0.01
+                    ? toHub.getAngle().get()
+                    : robotPose.getRotation();
+            
+            // Avoid an undefined aiming direction at the target center.
+            m_driveFacingAngle.withTargetDirection(deltaAngle);
+
+          }
+
+          m_drivetrain.setControl(
+              m_driveFacingAngle
+                  .withVelocityX(m_velocityXSupplier.getAsDouble())
+                  .withVelocityY(m_velocityYSupplier.getAsDouble())
+                  .withDeadband(m_deadbandSupplier.getAsDouble()));
+        });
   }
 }

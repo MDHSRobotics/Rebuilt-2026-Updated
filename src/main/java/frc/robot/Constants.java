@@ -7,6 +7,7 @@ import org.wpilib.fields.Fields;
 import org.wpilib.framework.RobotBase;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.geometry.Translation3d;
 
 import frc.robot.subsystems.vision.FieldVisionConstants;
@@ -118,6 +119,20 @@ public final class Constants {
      * searching up the april tag 2D drawing from FRC Rebuilt. Units: Inches
      */
     public static final double DISTANCE_FROM_FLOOR_TO_HUB_TAG = 44.25;
+
+    /**
+     * (x,y) translations to the enters of the blue and red hubs
+     * These coordinates are relative to the blue alliance
+     */
+    public static final Translation2d BLUE_HUB_CENTER =
+        new Translation2d(
+            Inches.of(182.11).in(Meters),
+            Inches.of(158.84).in(Meters));
+
+    public static final Translation2d RED_HUB_CENTER =
+        new Translation2d(
+            Inches.of(469.11).in(Meters),
+            Inches.of(158.84).in(Meters));
   }
 
   public static class SimulationConstants {

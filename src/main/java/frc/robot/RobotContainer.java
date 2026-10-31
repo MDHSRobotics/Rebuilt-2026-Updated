@@ -364,27 +364,17 @@ private Trigger m_intakes =
                     m_hopper)));
 
 
-    // Lock on to hub: Triangle
+    // Lock on to hub: Y button
     m_operatorController.y()
         .toggleOnTrue(
-            m_drivetrain
-                .applyRequest(
-                    () ->
-                        m_drive
-                            .withVelocityX(getVelocityX())
-                            .withVelocityY(getVelocityY())
-                            .withRotationalRate(
-                                (m_fieldVision.hasTarget(FieldVisionConstants.FRONT_CAMERA_INDEX)
-                                    ? m_shooter.getYawRotationalRate(
-                                        m_fieldVision.getTargetX(FieldVisionConstants.FRONT_CAMERA_INDEX).getDegrees())
-                                    : 0.0)
-                                * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
+            m_AimingCommand.alignWithHubCenter()
                 .until(m_autoAlignCanceled));
+
     m_operatorController.y().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
     m_autoAlignCanceled.onTrue(Commands.runOnce(() -> m_isLocked = false));
 
     // Face the Hub Using Swerve Request: Square
-    m_driverController.square().whileTrue(m_AimingCommand.alignWithHub());
+    m_driverController.square().whileTrue(m_AimingCommand.alignWithHubApriltag());
   }
 
   /**
