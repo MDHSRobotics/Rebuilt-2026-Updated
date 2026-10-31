@@ -172,6 +172,7 @@ public class Shooter extends SubsystemBase implements Testable {
 
     m_shooterTelemetry.log("Distance From Robot to AprilTag", m_currentDistance);
     m_shooterTelemetry.log("AprilTag is recognized", m_tagIsSeen);
+     m_shooterTelemetry.log("Trim", m_shooterTrim);
   }
 
   public void runLeftMotor(double power, double kickerPower) {

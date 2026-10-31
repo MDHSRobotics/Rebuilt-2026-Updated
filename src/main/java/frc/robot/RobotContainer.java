@@ -125,11 +125,11 @@ private final CommandXboxController m_operatorController =
   private final List<Testable> testableSubsystems = List.of(m_intake, m_hopper, m_shooter);
 
 private Trigger m_autoAlignCanceled =
-    new Trigger(() -> Math.abs(m_driverController.getRightX()) > 0.1);
+    new Trigger(() -> Math.abs(m_driverController.getL2()) > 0.1);
 private Trigger m_shoot =
-    new Trigger(() -> m_operatorController.getRightTrigger() > 0.5);
+    new Trigger(() -> m_operatorController.getHID().getRawAxis(3) > 0.5);
 private Trigger m_intakes =
-    new Trigger(() -> m_driverController.getL2() > 0.5);
+    new Trigger(() -> m_driverController.getRightX() > 0.5);
 
   // Power Distribution Hub
   // public EnergyMonitor energyMonitor = new EnergyMonitor();
@@ -353,7 +353,7 @@ private Trigger m_intakes =
                     m_hopper)));
 
     // Spin Intake Reverse: Left Bumper
-    m_driverController.L1()
+    m_driverController.getHID().button(4)
         .whileTrue(
             new ParallelCommandGroup(
                 Commands.run(
@@ -396,8 +396,7 @@ private Trigger m_intakes =
 
     /* Intake Commands */
 
-   m_operatorController
-    .dpadDown()
+   m_operatorController.getHID().povDown()
     .onTrue(
         Commands.run(
             () -> m_intake.runMotors(1, 1),
@@ -448,13 +447,13 @@ private Trigger m_intakes =
 
     // Change Shooter Trim
     m_operatorController
-        .dpadRight()
+        .getHID().povRight()
         .onTrue(
             new InstantCommand(
                 () -> m_shooter.changeTrim(100)));
 
     m_operatorController
-        .dpadLeft()
+        .getHID().povLeft()
         .onTrue(
             new InstantCommand(
                 () -> m_shooter.changeTrim(-100)));
@@ -538,7 +537,7 @@ private Trigger m_intakes =
   }
 
  public double getRotationalRate() {
-  double input = -m_driverController.getRightX();
+  double input = -m_driverController.getL2();
 
   double limited = m_rotLimiter.calculate(input);
 
