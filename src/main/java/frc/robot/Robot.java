@@ -137,6 +137,8 @@ public class Robot extends LoggedRobot {
         DataLogManager.start("/U/logs/WPI-logs/");
     }
 
+    configureNetworkTablesLogging();
+
     // Capture Driver Station data
     DriverStation.startDataLog(DataLogManager.getLog(), true);
 
@@ -159,6 +161,89 @@ public class Robot extends LoggedRobot {
     m_robotContainer = new RobotContainer();
 
     epochLogger.start();
+  }
+
+/* 
+   * Configures logging to explicitly identify which NetworkTables entries get stored in log file.
+   * This is used to control the size of the log file and to make sure that we are logging all the important entries for debugging.
+   * This is important because the default behavior of logging all NetworkTables entries can result in very large log files that are difficult to analyze.
+   */
+  private void configureNetworkTablesLogging() {
+
+    // Start logging nothing by default. We will explicitly add the entries we want to log.
+    DataLogManager.logNetworkTables(false);
+
+    var nt = NetworkTableInstance.getDefault();
+    var log = DataLogManager.getLog();
+
+    // NTConnection is outside of NT table
+    nt.startConnectionDataLog(log, "NTConnection");
+
+    // Individual top-level entries.
+    nt.startEntryDataLog(log, "Match Time", "NT:Match Time");
+
+    // Entire tables to retain. Adjust these to match your actual NT paths.
+    String[] tablePrefixes = {
+      "/.schema/",      // This is hidden by AdvantageScope but is needed for structed telemetry to work properly.
+      "/CameraPublisher/",
+      "/DriveState/",
+      "/limelight_telemetry/",
+      "/limelightshared/",
+      "/PathPlanner/",
+      "/Robot/",
+      "/Swerve Requests/",
+      "/Telemetry/",
+      "/Test/",
+      "/Tunables/",
+      "/AdvantageKit/",
+      "/DriverStation/"
+    };
+
+    for (String prefix : tablePrefixes) {
+      nt.startEntryDataLog(log, prefix, "NT:" + prefix);
+    }
+
+    // Keep both names until the camera naming is resolved.
+    String[] cameraNames = {"limelight-front", "limelightsc1"};
+
+    // Do not include results_msgpack which is very large and not needed for logging. 
+    String[] cameraTopics = {
+      "botpose",          // Vision estimated robot poses
+      "camerapose",       // Camera transforms
+      //"capture_rewind", // Not sure but probably not needed 
+      "cl",               // Capture latency (milliseconds)
+      //"counter",        // Ignore: Used for object detection
+      "getcodepipeline_enabled",
+      "getpipe",          // Active pipeline index
+      "hb",               // Heartbeat counter
+      "hw",               // cpu temp, cpu usage, ram %, FPS
+      "imu",              // IMU
+      "ledMode",          // Pipeline-controlled, off, blink, or on, plus hardware-specific modes.
+      "pipeline",         // Requested pipeline index
+      //"results_msgpack",  // Ignore: uses lots of space!!!!
+      "robot_orientation_set",    // Orientation supplied by robot code
+      "stddevs",          // Camera-reported pose standard deviations for MegaTag1 and MegaTag2
+      //"t2d",            // Ignore: Array of other individual NT targeting measurements
+      "ta",               // Target area as a percentage of the image
+      "targetpose",       // Target transforms relative to the camera and robot coordinate systems.
+      //"tc",             // Ignore pixel color under crosshairs
+      //"tcclass",        // Ignore: for neural networks
+      //"tdclass",        // Ignore: for neural networks
+      "tdist",            // Distance to primary target in meters
+      "throttle_set",     // Number of frames to skip
+      "tid",              // Primary AprilTag ID
+      "tl",               // Processing-pipeline latency in milliseconds;
+      "tv",               // Target validity: 1 means a valid target exists; 0 means none.
+      "tx",               // Horizontal target offset from the crosshair, in degrees. 
+      "ty"                // Vertical target offset from the crosshair, in degrees.
+    };
+
+    for (String cameraName : cameraNames) {
+      for (String topic : cameraTopics) {
+        String prefix = "/" + cameraName + "/" + topic;
+        nt.startEntryDataLog(log, prefix, "NT:" + prefix);
+      }
+    }
   }
 
   /** 
